@@ -1,6 +1,7 @@
 import datetime as dt
 
 from sqlalchemy import Column, Integer, String, DateTime
+from sqlalchemy.orm import relationship
 
 from scrum.db.base_class import Base
 
@@ -13,3 +14,4 @@ class Project(Base):
     description = Column(String(2000))
     color = Column(String)
     created_at = Column(DateTime, default=dt.datetime.utcnow())
+    users = relationship('AccessibleProjects')
