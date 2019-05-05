@@ -18,11 +18,6 @@ class UserBaseInDb(UserBase):
     is_superuser: bool = False
 
 
-# create
-class UserCreate(UserBase):
-    password: str
-
-
 # update
 class UserUpdate(UserBaseInDb):
     password: Optional[str] = None
