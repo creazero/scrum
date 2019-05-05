@@ -14,10 +14,17 @@ class UserRepository(object):
 
     def fetch(self, user_id: int) -> Optional[User]:
         """
-        Fetch one user by his id
+        Fetch user object by its id
         :param user_id: user's id
         :return: user's object or None
         """
         with self.scoped_session() as session:
             user_id = int(user_id)
-            return session.query.get(user_id)
+            return session.query(User).get(user_id)
+
+    def fetch_by_username(self, username: str) -> Optional[User]:
+        """
+        Fetch a user object by its username
+        """
+        with self.scoped_session() as session:
+            return session.query(User).filter_by(username=username).first()
