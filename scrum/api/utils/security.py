@@ -1,10 +1,4 @@
-from sqlalchemy.orm import Session
-from starlette.requests import Request
 from passlib.hash import bcrypt
-
-
-def get_db(request: Request) -> Session:
-    return request.state.session
 
 
 def verify_password(plain: str, hashed: str) -> bool:
@@ -12,4 +6,9 @@ def verify_password(plain: str, hashed: str) -> bool:
 
 
 def get_password_hash(plain_password: str) -> str:
+    """
+    Get a hash for user's password
+    :param plain_password: password as text
+    :return: hashed password
+    """
     return bcrypt.hash(plain_password)

@@ -3,7 +3,7 @@ from typing import List
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from scrum.api.utils import get_db
+from scrum.api.utils.db import get_db
 from scrum.models.users import User, UserAuth
 from scrum.repositories.users import UserRepository
 

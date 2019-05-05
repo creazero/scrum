@@ -2,7 +2,8 @@ from datetime import timedelta
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from scrum.api.utils import get_db, verify_password
+from scrum.api.utils.db import get_db
+from scrum.api.utils.security import verify_password
 from scrum.core import config
 from scrum.core.jwt import create_access_token
 from scrum.models.token import Token
