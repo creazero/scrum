@@ -12,7 +12,7 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 8  # 60 minutes * 24 hours * 8 days = 8 
 POSTGRES_SERVER = os.getenv('POSTGRES_SERVER', 'localhost')
 POSTGRES_USER = os.getenv('POSTGRES_USER', 'postgres')
 POSTGRES_PASSWORD = os.getenv('POSTGRES_PASSWORD', 'postgres')
-POSTGRES_DB = os.getenv('POSTGRES_DB', 'scrum')
+POSTGRES_DB = os.getenv('POSTGRES_DB', 'scrum_ng')
 SQLALCHEMY_DATABASE_URI = (
     f'postgresql://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_SERVER}/{POSTGRES_DB}'
 )
