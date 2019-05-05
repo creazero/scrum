@@ -1,7 +1,7 @@
 import os
 
 
-API_V1_STR = '/api/v1'
+API_V1_PREFIX = '/api/v1'
 
 SECRET_KEY = os.getenvb(b'SECRET_KEY')
 if not SECRET_KEY:

@@ -1,15 +1,12 @@
 from fastapi import FastAPI
 
-from scrum import users
+from scrum.api.v1.api import api_router
+from scrum.core.config import API_V1_PREFIX
 
 
 def create_app() -> FastAPI:
-    _api = FastAPI()
+    _api = FastAPI(title='Scrum')
 
-    register_routers(_api)
+    _api.include_router(api_router, prefix=API_V1_PREFIX)
 
     return _api
-
-
-def register_routers(app: FastAPI):
-    app.include_router(users.router, prefix='/users', tags=['users'])
