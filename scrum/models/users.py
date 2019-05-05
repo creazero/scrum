@@ -5,13 +5,17 @@ from pydantic import BaseModel
 
 class UserBase(BaseModel):
     username: str = None
-    full_name: str = None
-    is_active: bool = True
-    is_superuser: bool = False
+
+
+class UserAuth(UserBase):
+    password: str
 
 
 class UserBaseInDb(UserBase):
     id: int = None
+    full_name: str = None
+    is_active: bool = True
+    is_superuser: bool = False
 
 
 # create
