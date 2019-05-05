@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from scrum.api.utils.db import get_db
+from scrum.api.utils.security import get_oauth_schema
 from scrum.models.users import User, UserAuth
 from scrum.repositories.users import UserRepository
 
@@ -11,9 +12,7 @@ router = APIRouter()
 
 
 @router.get('/users', response_model=List[User])
-def get_users(
-        session: Session = Depends(get_db)
-):
+def get_users(session: Session = Depends(get_db), _ = Depends(get_oauth_schema())):
     """
     Fetch all users
     :param session: db session

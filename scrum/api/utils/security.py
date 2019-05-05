@@ -1,3 +1,4 @@
+from fastapi.security import OAuth2PasswordBearer
 from passlib.hash import bcrypt
 
 
@@ -12,3 +13,10 @@ def get_password_hash(plain_password: str) -> str:
     :return: hashed password
     """
     return bcrypt.hash(plain_password)
+
+
+def get_oauth_schema() -> OAuth2PasswordBearer:
+    """
+    Create an OAuth2 schema for working with JWT
+    """
+    return OAuth2PasswordBearer(tokenUrl='')
