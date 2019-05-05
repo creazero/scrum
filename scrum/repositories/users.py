@@ -2,7 +2,7 @@ from typing import List, Optional
 
 from sqlalchemy.orm import Session
 
-from scrum.api.utils.security import get_password_hash
+from scrum.core.security import get_password_hash
 from scrum.db_models.user import User as DBUser
 from scrum.models.users import UserAuth
 

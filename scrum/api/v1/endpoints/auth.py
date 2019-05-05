@@ -3,9 +3,9 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from scrum.api.utils.db import get_db
-from scrum.api.utils.security import verify_password
 from scrum.core import config
 from scrum.core.jwt import create_access_token
+from scrum.core.security import verify_password
 from scrum.models.token import Token
 from scrum.models.users import UserAuth
 from scrum.repositories.users import UserRepository

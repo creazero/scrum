@@ -4,7 +4,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from scrum.api.utils.db import get_db
-from scrum.api.utils.security import get_oauth_schema
+from scrum.api.utils.security import get_oauth_schema, get_current_user
+from scrum.db_models.user import User as DBUser
 from scrum.models.users import User, UserAuth
 from scrum.repositories.users import UserRepository
 
@@ -32,3 +33,11 @@ def create_user(user_in: UserAuth, session: Session = Depends(get_db)):
             detail='Пользователь с таким именем уже существует'
         )
     return repository.create_user(user_in)
+
+
+@router.get('/current_user', response_model=User)
+def current_user(
+        session: Session = Depends(get_db),
+        user: DBUser = Depends(get_current_user)
+):
+    return user
