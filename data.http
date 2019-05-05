@@ -1,0 +1,15 @@
+GET http://localhost:8000/
+Accept: application/json
+
+###
+
+POST http://localhost:8000/
+Content-Type: application/json
+
+{
+  "username": "user",
+  "full_name": "full name",
+  "yoba": "LOL"
+}
+
+###
