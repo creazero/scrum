@@ -1,7 +1,7 @@
 from contextlib import contextmanager
 
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, scoped_session
+from sqlalchemy.orm import sessionmaker, scoped_session, Session
 
 
 class SessionScope(object):
@@ -11,7 +11,7 @@ class SessionScope(object):
         self._session_provider = scoped_session(sessionmaker(self._engine))
 
     @contextmanager
-    def __call__(self, commit_on_exit=True, *args, **kwargs):
+    def __call__(self, commit_on_exit=True, *args, **kwargs) -> Session:
         session = self._session_provider()
         try:
             yield session
