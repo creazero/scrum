@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, Boolean
 
-from scrum.db.base import Base
+from scrum.db.base_class import Base
 
 
 class User(Base):
