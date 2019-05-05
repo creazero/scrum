@@ -1,8 +1,7 @@
 from sqlalchemy import Column, Integer, String
-from sqlalchemy.ext.declarative import declarative_base
 from passlib.hash import bcrypt
 
-Base = declarative_base()
+from scrum.db.base import Base
 
 
 class User(Base):

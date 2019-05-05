@@ -1,10 +1,11 @@
 from typing import Optional, List
 
+from scrum.db import SessionScope
 from scrum.users.models import User
 
 
 class UserRepository(object):
-    def __init__(self, session_scope):
+    def __init__(self, session_scope: SessionScope):
         super().__init__()
         self.session_scope = session_scope
 
