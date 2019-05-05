@@ -1,10 +1,10 @@
 from datetime import timedelta
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
 
 from scrum.api.utils import get_db, verify_password
 from scrum.core import config
 from scrum.core.jwt import create_access_token
-from scrum.db.session import SessionScope
 from scrum.models.token import Token
 from scrum.models.users import UserAuth
 from scrum.repositories.users import UserRepository
@@ -13,7 +13,7 @@ router = APIRouter()
 
 
 @router.post('/login', response_model=Token)
-def login(session: SessionScope = Depends(get_db), user_auth: UserAuth = None):
+def login(session: Session = Depends(get_db), user_auth: UserAuth = None):
     repository = UserRepository(session)
     user = repository.fetch_by_username(user_auth.username)
     if user is None or not verify_password(user_auth.password, user.hashed_password):
