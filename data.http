@@ -45,3 +45,9 @@ GET http://localhost:8000/api/v1/projects
 Accept: application/json
 
 ###
+
+GET http://localhost:8000/api/v1/projects/1
+Accept: application/json
+Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoxLCJleHAiOjE1NTc4NTcxMzgsInN1YiI6ImFjY2VzcyJ9.RzAH3Sz3mzdsfBwELz7pyuamgAXBXoAqpK5cH5XGtu8
+
+###

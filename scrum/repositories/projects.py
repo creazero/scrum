@@ -1,20 +1,25 @@
 from typing import List, Optional
 
 from fastapi import HTTPException
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 from starlette.status import HTTP_404_NOT_FOUND, HTTP_500_INTERNAL_SERVER_ERROR
 
 from scrum.db_models.project import Project as DBProject
 from scrum.models.project import ProjectCreate
+from scrum.repositories.accessible_project import AccessibleProjectRepository
 
 
 class ProjectRepository(object):
     def __init__(self, session: Session):
         self.session = session
+        self.accessible_project_repo = AccessibleProjectRepository(self.session)
 
-    def fetch_all(self) -> List[DBProject]:
+    def fetch_all(self, user_id: int, is_superuser: bool) -> List[DBProject]:
         try:
-            return self.session.query(DBProject).all()
+            accessible_projects = self.accessible_project_repo.fetch_accessible_for_user(user_id)
+            return self.session.query(DBProject).\
+                filter(or_(DBProject.id.in_(accessible_projects), is_superuser))
         except Exception:
             self.session.rollback()
             raise

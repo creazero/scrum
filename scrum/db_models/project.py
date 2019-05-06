@@ -1,4 +1,5 @@
 import datetime as dt
+from typing import List
 
 from sqlalchemy import Column, Integer, String, DateTime
 from sqlalchemy.orm import relationship
@@ -15,7 +16,7 @@ class Project(Base):
     description = Column(String(2000))
     color = Column(String)
     created_at = Column(DateTime, default=dt.datetime.utcnow())
-    users = relationship('AccessibleProjects')
+    users: List[AccessibleProject] = relationship('AccessibleProject')
 
     def __init__(self, creator_id: int, **kwargs):
         super().__init__(self, **kwargs)

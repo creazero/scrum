@@ -19,7 +19,7 @@ def get_projects(
         current_user: User = Depends(get_current_user)
 ):
     repository = ProjectRepository(session)
-    return repository.fetch_all()
+    return repository.fetch_all(current_user.id, current_user.is_superuser)
 
 
 @router.get('/projects/{project_id}', response_model=Project)
