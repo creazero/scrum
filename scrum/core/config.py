@@ -3,9 +3,7 @@ import os
 
 API_V1_PREFIX = '/api/v1'
 
-SECRET_KEY = os.getenvb(b'SECRET_KEY')
-if not SECRET_KEY:
-    SECRET_KEY = os.urandom(32)
+SECRET_KEY = os.getenvb(b'SECRET_KEY', b'LMAO_SECRETS_ARE_NOT_WELCOME_ERE')
 
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 8  # 60 minutes * 24 hours * 8 days = 8 days
 
