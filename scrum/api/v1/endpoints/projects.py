@@ -2,10 +2,12 @@ from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from starlette.status import HTTP_404_NOT_FOUND
+from starlette.status import HTTP_404_NOT_FOUND, HTTP_500_INTERNAL_SERVER_ERROR
 
 from scrum.api.utils.db import get_db
-from scrum.models.project import Project
+from scrum.api.utils.security import get_current_user
+from scrum.db_models.user import User
+from scrum.models.project import Project, ProjectCreate
 from scrum.repositories.projects import ProjectRepository
 
 router = APIRouter()
@@ -30,3 +32,20 @@ def get_project(
             detail='Проект с таким id не найден'
         )
     return project
+
+
+@router.post('/projects', response_model=Project, responses=201)
+def create_project(
+        data: ProjectCreate,
+        session: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user)
+):
+    repository = ProjectRepository(session)
+    try:
+        new_project = repository.create(data, current_user.id)
+    except Exception:
+        raise HTTPException(
+            status_code=HTTP_500_INTERNAL_SERVER_ERROR,
+            detail='Внутренняя ошибка сервера'
+        )
+    return new_project
