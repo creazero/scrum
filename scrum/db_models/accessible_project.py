@@ -10,7 +10,7 @@ class Roles(enum.Enum):
     dev = 'dev'
 
 
-class AccessibleProjects(Base):
+class AccessibleProject(Base):
     __tablename__ = 'accessible_projects'
 
     user_id = Column(Integer, ForeignKey('users.id'), primary_key=True)
