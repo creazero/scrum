@@ -14,7 +14,10 @@ router = APIRouter()
 
 
 @router.get('/projects', response_model=List[Project])
-def get_projects(session: Session = Depends(get_db)):
+def get_projects(
+        session: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user)
+):
     repository = ProjectRepository(session)
     return repository.fetch_all()
 
@@ -22,11 +25,12 @@ def get_projects(session: Session = Depends(get_db)):
 @router.get('/projects/{project_id}', response_model=Project)
 def get_project(
         project_id: int,
-        session: Session = Depends(get_db)
+        session: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user)
 ):
     repository = ProjectRepository(session)
     project = repository.fetch(project_id)
-    if project_id is None:
+    if project is None:
         raise HTTPException(
             status_code=HTTP_404_NOT_FOUND,
             detail='Проект с таким id не найден'
@@ -34,7 +38,7 @@ def get_project(
     return project
 
 
-@router.post('/projects', response_model=Project, responses=201)
+@router.post('/projects', response_model=Project, status_code=201)
 def create_project(
         data: ProjectCreate,
         session: Session = Depends(get_db),
@@ -54,7 +58,8 @@ def create_project(
 @router.delete('/projects/{project_id}')
 def delete_project(
         project_id: int,
-        session: Session = Depends(get_db)
+        session: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user)
 ):
     repository = ProjectRepository(session)
     repository.delete(project_id)
