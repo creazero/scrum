@@ -49,3 +49,13 @@ def create_project(
             detail='Внутренняя ошибка сервера'
         )
     return new_project
+
+
+@router.delete('/projects/{project_id}')
+def delete_project(
+        project_id: int,
+        session: Session = Depends(get_db)
+):
+    repository = ProjectRepository(session)
+    repository.delete(project_id)
+    return {'status': 'ok'}

@@ -1,6 +1,8 @@
 from typing import List, Optional
 
+from fastapi import HTTPException
 from sqlalchemy.orm import Session
+from starlette.status import HTTP_404_NOT_FOUND, HTTP_500_INTERNAL_SERVER_ERROR
 
 from scrum.db_models.project import Project as DBProject
 from scrum.models.project import ProjectCreate
@@ -36,3 +38,20 @@ class ProjectRepository(object):
         except Exception:
             self.session.rollback()
             raise
+
+    def delete(self, project_id: int) -> None:
+        project = self.fetch(project_id)
+        if project is None:
+            raise HTTPException(
+                status_code=HTTP_404_NOT_FOUND,
+                detail='Проект с таким id не найден'
+            )
+        self.session.delete(project)
+        try:
+            self.session.commit()
+        except Exception:
+            self.session.rollback()
+            raise HTTPException(
+                status_code=HTTP_500_INTERNAL_SERVER_ERROR,
+                detail='Произошла ошибка при удалении проекта'
+            )
