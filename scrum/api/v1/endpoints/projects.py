@@ -2,9 +2,10 @@ from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from starlette.status import HTTP_404_NOT_FOUND, HTTP_500_INTERNAL_SERVER_ERROR
+from starlette.status import HTTP_404_NOT_FOUND, HTTP_500_INTERNAL_SERVER_ERROR, HTTP_403_FORBIDDEN
 
 from scrum.api.utils.db import get_db
+from scrum.api.utils.projects import has_access_to_project
 from scrum.api.utils.security import get_current_user
 from scrum.db_models.user import User
 from scrum.models.project import Project, ProjectCreate
@@ -34,6 +35,11 @@ def get_project(
         session: Session = Depends(get_db),
         current_user: User = Depends(get_current_user)
 ):
+    if not has_access_to_project(session, current_user.id, project_id):
+        raise HTTPException(
+            status_code=HTTP_403_FORBIDDEN,
+            detail='У текущего пользователя нет доступа к данному проекту'
+        )
     repository = ProjectRepository(session)
     project = repository.fetch(project_id)
     if project is None:

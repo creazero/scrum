@@ -43,6 +43,7 @@ Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoxLCJle
 
 GET http://localhost:8000/api/v1/projects
 Accept: application/json
+Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoxLCJleHAiOjE1NTgwODkwMDgsInN1YiI6ImFjY2VzcyJ9.F8CUqOdQWg3fGIWT-758uHEtDdbsbdx_1b_nq-WxzWM
 
 ###
 
