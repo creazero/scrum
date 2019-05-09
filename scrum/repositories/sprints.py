@@ -1,4 +1,5 @@
 import datetime as dt
+import logging
 from typing import List, Optional
 
 from fastapi import HTTPException
@@ -13,6 +14,7 @@ internal_error = HTTPException(
     status_code=HTTP_500_INTERNAL_SERVER_ERROR,
     detail='Внутренняя ошибка сервера'
 )
+logger = logging.getLogger(__name__)
 
 
 class SprintRepository(object):
@@ -26,14 +28,16 @@ class SprintRepository(object):
                     filter(DBSprint.project_id.in_(accessible_projects)).all()
             else:
                 return self.session.query(DBSprint).filter_by(project_id=project_id).all()
-        except exc.SQLAlchemyError:
+        except exc.SQLAlchemyError as e:
+            logger.error(e)
             self.session.rollback()
             raise internal_error
 
     def fetch(self, sprint_id: int) -> Optional[DBSprint]:
         try:
             return self.session.query(DBSprint).get(sprint_id)
-        except exc.SQLAlchemyError:
+        except exc.SQLAlchemyError as e:
+            logger.error(e)
             self.session.rollback()
             raise internal_error
 
@@ -42,17 +46,21 @@ class SprintRepository(object):
         try:
             return self.session.query(DBSprint).filter(DBSprint.start_date <= today,
                                                        DBSprint.end_date >= today).first()
-        except exc.SQLAlchemyError:
+        except exc.SQLAlchemyError as e:
+            logger.error(e)
             self.session.rollback()
             raise internal_error
 
     def create(self, sprint_in: SprintCreate, sprint_length: int = 2) -> DBSprint:
-        sprint = DBSprint(length=sprint_length, start_date=sprint_in.start_date, project_id=sprint_in.project_id)
+        sprint = DBSprint(length=sprint_length, start_date=sprint_in.start_date,
+                          project_id=sprint_in.project_id)
+        self.session.begin()
         self.session.add(sprint)
         try:
             self.session.commit()
             self.session.refresh(sprint)
-        except exc.SQLAlchemyError:
+        except exc.SQLAlchemyError as e:
+            logger.error(e)
             self.session.rollback()
             raise internal_error
         return sprint

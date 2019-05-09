@@ -1,3 +1,4 @@
+import logging
 from typing import List, Optional
 
 from fastapi import HTTPException
@@ -12,6 +13,7 @@ internal_error = HTTPException(
     status_code=HTTP_500_INTERNAL_SERVER_ERROR,
     detail='Внутренняя ошибка сервера'
 )
+logger = logging.getLogger(__name__)
 
 
 class TaskRepository(object):
@@ -21,47 +23,50 @@ class TaskRepository(object):
     def fetch_all(self) -> List[DBTask]:
         try:
             return self.session.query(DBTask).all()
-        except exc.SQLAlchemyError:
-            self.session.rollback()
+        except exc.SQLAlchemyError as e:
+            logger.error(e)
             raise internal_error
 
     def fetch(self, task_id: int) -> Optional[DBTask]:
         try:
             return self.session.query(DBTask).get(task_id)
-        except exc.SQLAlchemyError:
-            self.session.rollback()
+        except exc.SQLAlchemyError as e:
+            logger.error(e)
             raise internal_error
 
     def fetch_accessible(self, accessible_projects: List[int]) -> List[DBTask]:
         try:
             return self.session.query(DBTask).\
                 filter(DBTask.project_id.in_(accessible_projects)).all()
-        except exc.SQLAlchemyError:
-            self.session.rollback()
+        except exc.SQLAlchemyError as e:
+            logger.error(e)
             raise internal_error
 
     def fetch_from_project(self, project_id: int) -> List[DBTask]:
         try:
             return self.session.query(DBTask).filter_by(project_id=project_id).all()
         except exc.SQLAlchemyError:
-            self.session.rollback()
             raise internal_error
 
     def create(self, task_in: TaskCreate, creator_id: int) -> DBTask:
         new_task = DBTask(task_in, creator_id)
+        self.session.begin()
         self.session.add(new_task)
         try:
             self.session.commit()
             self.session.refresh(new_task)
-        except exc.SQLAlchemyError:
+        except exc.SQLAlchemyError as e:
+            logger.error(e)
             self.session.rollback()
             raise internal_error
         return new_task
 
     def delete(self, task: DBTask) -> None:
+        self.session.begin()
         self.session.delete(task)
         try:
             self.session.commit()
-        except exc.SQLAlchemyError:
+        except exc.SQLAlchemyError as e:
+            logger.error(e)
             self.session.rollback()
             raise internal_error

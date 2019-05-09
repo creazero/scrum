@@ -1,3 +1,4 @@
+import logging
 from typing import List, Optional
 
 from fastapi import HTTPException
@@ -12,6 +13,7 @@ commit_exception = HTTPException(
     status_code=HTTP_500_INTERNAL_SERVER_ERROR,
     detail='Произошла внутренняя ошибка'
 )
+logger = logging.getLogger(__name__)
 
 
 class ProjectRepository(object):
@@ -25,26 +27,28 @@ class ProjectRepository(object):
             else:
                 return self.session.query(DBProject).\
                     filter(or_(DBProject.id.in_(accessible_projects), is_superuser)).all()
-        except exc.SQLAlchemyError:
-            self.session.rollback()
+        except exc.SQLAlchemyError as e:
+            logger.error(e)
             raise commit_exception
 
     def fetch(self, project_id: int) -> Optional[DBProject]:
         try:
             return self.session.query(DBProject).get(project_id)
-        except exc.SQLAlchemyError:
-            self.session.rollback()
+        except exc.SQLAlchemyError as e:
+            logger.error(e)
             raise commit_exception
 
     def create(self, user_data: ProjectCreate, creator_id: int) -> DBProject:
         new_project = DBProject(creator_id, name=user_data.name,
                                 description=user_data.description,
                                 color=user_data.color)
+        self.session.begin()
         self.session.add(new_project)
         try:
             self.session.commit()
             self.session.refresh(new_project)
         except exc.SQLAlchemyError as e:
+            logger.error(e)
             self.session.rollback()
             raise commit_exception
         return new_project
@@ -56,9 +60,11 @@ class ProjectRepository(object):
                 status_code=HTTP_404_NOT_FOUND,
                 detail='Проект с таким id не найден'
             )
+        self.session.begin()
         self.session.delete(project)
         try:
             self.session.commit()
-        except exc.SQLAlchemyError:
+        except exc.SQLAlchemyError as e:
+            logger.error(e)
             self.session.rollback()
             raise commit_exception
