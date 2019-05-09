@@ -11,8 +11,10 @@ class Sprint(Base):
     id = Column(Integer, primary_key=True)
     start_date = Column(Date, nullable=False)
     end_date = Column(Date, nullable=False)
-    project_id = Column(Integer, ForeignKey('projects.id'), index=True)
+    project_id = Column(Integer, ForeignKey('projects.id'), index=True, nullable=False)
 
-    def __init__(self, *, length: int, start_date: dt.date = None, project_id: int = None):
+    def __init__(self, *, length: int, start_date: dt.date = None, project_id: int = None, **kwargs):
+        super().__init__(**kwargs)
+        self.start_date = start_date
         self.end_date = start_date + dt.timedelta(weeks=length)
         self.project_id = project_id
