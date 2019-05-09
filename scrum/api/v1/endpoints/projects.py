@@ -8,6 +8,7 @@ from scrum.api.utils.db import get_db
 from scrum.api.utils.security import get_current_user
 from scrum.db_models.user import User
 from scrum.models.project import Project, ProjectCreate
+from scrum.repositories.accessible_project import AccessibleProjectRepository
 from scrum.repositories.projects import ProjectRepository
 
 router = APIRouter()
@@ -18,8 +19,13 @@ def get_projects(
         session: Session = Depends(get_db),
         current_user: User = Depends(get_current_user)
 ):
-    repository = ProjectRepository(session)
-    return repository.fetch_all(current_user.id, current_user.is_superuser)
+    project_repo = ProjectRepository(session)
+    if current_user.is_superuser:
+        return project_repo.fetch_all([], current_user.is_superuser)
+    else:
+        accessible_repo = AccessibleProjectRepository(session)
+        return project_repo.fetch_all(accessible_repo.fetch_accessible_for_user(current_user.id),
+                                      current_user.is_superuser)
 
 
 @router.get('/projects/{project_id}', response_model=Project)

@@ -7,7 +7,6 @@ from starlette.status import HTTP_404_NOT_FOUND, HTTP_500_INTERNAL_SERVER_ERROR
 
 from scrum.db_models.project import Project as DBProject
 from scrum.models.project import ProjectCreate
-from scrum.repositories.accessible_project import AccessibleProjectRepository
 
 commit_exception = HTTPException(
     status_code=HTTP_500_INTERNAL_SERVER_ERROR,
@@ -18,13 +17,14 @@ commit_exception = HTTPException(
 class ProjectRepository(object):
     def __init__(self, session: Session):
         self.session = session
-        self.accessible_project_repo = AccessibleProjectRepository(self.session)
 
-    def fetch_all(self, user_id: int, is_superuser: bool) -> List[DBProject]:
+    def fetch_all(self, accessible_projects: List[int], is_superuser: bool) -> List[DBProject]:
         try:
-            accessible_projects = self.accessible_project_repo.fetch_accessible_for_user(user_id)
-            return self.session.query(DBProject).\
-                filter(or_(DBProject.id.in_(accessible_projects), is_superuser))
+            if is_superuser:
+                return self.session.query(DBProject).all()
+            else:
+                return self.session.query(DBProject).\
+                    filter(or_(DBProject.id.in_(accessible_projects), is_superuser)).all()
         except exc.SQLAlchemyError:
             self.session.rollback()
             raise commit_exception
