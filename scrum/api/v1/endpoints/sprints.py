@@ -7,6 +7,7 @@ from starlette.status import HTTP_403_FORBIDDEN, HTTP_400_BAD_REQUEST
 from scrum.api.utils.db import get_db
 from scrum.api.utils.projects import has_access_to_project, is_project_owner
 from scrum.api.utils.security import get_current_user
+from scrum.api.utils.sprints import has_intersecting_sprint
 from scrum.db_models.user import User
 from scrum.models.sprint import SprintCreate, Sprint
 from scrum.repositories.accessible_project import AccessibleProjectRepository
@@ -53,5 +54,12 @@ def create_sprint(
             detail='Текущий пользователь не имеет права на создание спринтов в данном проекте'
         )
     sprint_repo = SprintRepository(session)
+    # get all sprints for the intersection check
+    sprints = sprint_repo.fetch_all([], sprint_in.project_id)
+    if has_intersecting_sprint(sprint_in.start_date, sprints):
+        raise HTTPException(
+            status_code=HTTP_400_BAD_REQUEST,
+            detail='Для такой даты начала спринта существует пересекающийся спринт'
+        )
     created_sprint = sprint_repo.create(sprint_in)
     return created_sprint
