@@ -53,13 +53,7 @@ class ProjectRepository(object):
             raise commit_exception
         return new_project
 
-    def delete(self, project_id: int) -> None:
-        project = self.fetch(project_id)
-        if project is None:
-            raise HTTPException(
-                status_code=HTTP_404_NOT_FOUND,
-                detail='Проект с таким id не найден'
-            )
+    def delete(self, project: DBProject) -> None:
         self.session.begin()
         self.session.delete(project)
         try:

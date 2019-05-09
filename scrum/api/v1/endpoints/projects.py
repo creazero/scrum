@@ -67,7 +67,13 @@ def delete_project(
         session: Session = Depends(get_db),
         current_user: User = Depends(get_current_user)
 ):
-    # TODO: QUESTION PROJECT'S EXISTENCE????
+    repository = ProjectRepository(session)
+    project = repository.fetch(project_id)
+    if project is None:
+        raise HTTPException(
+            status_code=HTTP_404_NOT_FOUND,
+            detail='Проект с данным id не найден'
+        )
     if not has_access_to_project(session, current_user.id, project_id):
         raise HTTPException(
             status_code=HTTP_403_FORBIDDEN,
@@ -78,6 +84,5 @@ def delete_project(
             status_code=HTTP_403_FORBIDDEN,
             detail='Текущий пользователь не является владельцем проекта'
         )
-    repository = ProjectRepository(session)
-    repository.delete(project_id)
+    repository.delete(project)
     return {'status': 'ok'}
