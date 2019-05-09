@@ -4,6 +4,7 @@ import enum
 from sqlalchemy import Column, String, Integer, ForeignKey, DateTime, Enum
 
 from scrum.db.base_class import Base
+from scrum.models.task import TaskCreate
 
 
 class TaskState(enum.Enum):
@@ -27,3 +28,12 @@ class Task(Base):
     weight = Column(Integer)
     priority = Column(Integer, nullable=False, default=0)
     state = Column(Enum(TaskState))
+
+    def __init__(self, task_in: TaskCreate, creator_id: int, **kwargs):
+        super().__init__(**kwargs)
+        self.name = task_in.name
+        self.description = task_in.description
+        self.project_id = task_in.project_id
+        self.priority = task_in.priority
+        self.weight = task_in.weight
+        self.creator_id = creator_id

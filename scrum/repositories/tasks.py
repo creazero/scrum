@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from starlette.status import HTTP_500_INTERNAL_SERVER_ERROR
 
 from scrum.db_models.task import Task as DBTask
+from scrum.models.task import TaskCreate
 
 internal_error = HTTPException(
     status_code=HTTP_500_INTERNAL_SERVER_ERROR,
@@ -38,3 +39,14 @@ class TaskRepository(object):
         except exc.SQLAlchemyError:
             self.session.rollback()
             raise internal_error
+
+    def create(self, task_in: TaskCreate, creator_id: int) -> DBTask:
+        new_task = DBTask(task_in, creator_id)
+        self.session.add(new_task)
+        try:
+            self.session.commit()
+            self.session.refresh(new_task)
+        except exc.SQLAlchemyError:
+            self.session.rollback()
+            raise internal_error
+        return new_task

@@ -9,6 +9,7 @@ class TaskBase(BaseModel):
     description: Optional[str] = None
     project_id: int
     priority: int
+    weight: int
 
 
 class TaskBaseInDb(TaskBase):
@@ -17,7 +18,6 @@ class TaskBaseInDb(TaskBase):
     sprint_id: Optional[int]
     creator_id: int
     assignee_id: Optional[int]
-    weight: int
     state: Optional[str]
 
 
