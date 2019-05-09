@@ -18,16 +18,19 @@ class SprintRepository(object):
     def __init__(self, session: Session):
         self.session = session
 
-    def fetch_all(self, accessible_projects: List[int]) -> List[DBSprint]:
+    def fetch_all(self, accessible_projects: List[int], project_id: int) -> List[DBSprint]:
         try:
-            return self.session.query(DBSprint).\
-                filter(DBSprint.project_id.in_(accessible_projects)).all()
+            if project_id is None:
+                return self.session.query(DBSprint).\
+                    filter(DBSprint.project_id.in_(accessible_projects)).all()
+            else:
+                return self.session.query(DBSprint).filter_by(project_id=project_id).all()
         except exc.SQLAlchemyError:
             self.session.rollback()
             raise internal_error
 
     def create(self, sprint_in: SprintCreate, sprint_length: int = 2) -> DBSprint:
-        sprint = DBSprint(length=sprint_length, start_date=sprint_in.start_date)
+        sprint = DBSprint(length=sprint_length, start_date=sprint_in.start_date, project_id=sprint_in.project_id)
         self.session.add(sprint)
         try:
             self.session.commit()
