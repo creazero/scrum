@@ -57,13 +57,7 @@ def create_project(
         current_user: User = Depends(get_current_user)
 ):
     repository = ProjectRepository(session)
-    try:
-        new_project = repository.create(data, current_user.id)
-    except Exception:
-        raise HTTPException(
-            status_code=HTTP_500_INTERNAL_SERVER_ERROR,
-            detail='Внутренняя ошибка сервера'
-        )
+    new_project = repository.create(data, current_user.id)
     return new_project
 
 

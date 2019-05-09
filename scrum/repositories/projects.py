@@ -37,17 +37,17 @@ class ProjectRepository(object):
             raise commit_exception
 
     def create(self, user_data: ProjectCreate, creator_id: int) -> DBProject:
+        new_project = DBProject(creator_id, name=user_data.name,
+                                description=user_data.description,
+                                color=user_data.color)
+        self.session.add(new_project)
         try:
-            new_project = DBProject(creator_id, name=user_data.name,
-                                    description=user_data.description,
-                                    color=user_data.color)
-            self.session.add(new_project)
             self.session.commit()
             self.session.refresh(new_project)
-            return new_project
-        except exc.SQLAlchemyError:
+        except exc.SQLAlchemyError as e:
             self.session.rollback()
             raise commit_exception
+        return new_project
 
     def delete(self, project_id: int) -> None:
         project = self.fetch(project_id)

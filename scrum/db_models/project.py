@@ -19,6 +19,6 @@ class Project(Base):
     users: List[AccessibleProject] = relationship('AccessibleProject')
 
     def __init__(self, creator_id: int, **kwargs):
-        super().__init__(self, **kwargs)
+        super().__init__(**kwargs)
         ap = AccessibleProject(user_id=creator_id, role=Roles.owner)
         self.users.append(ap)
