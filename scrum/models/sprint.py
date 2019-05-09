@@ -5,6 +5,7 @@ from pydantic import BaseModel
 
 class SprintBase(BaseModel):
     start_date: dt.date
+    project_id: int
 
 
 class SprintBaseInDb(SprintBase):
