@@ -30,6 +30,13 @@ class SprintRepository(object):
             self.session.rollback()
             raise internal_error
 
+    def fetch(self, sprint_id: int) -> Optional[DBSprint]:
+        try:
+            return self.session.query(DBSprint).get(sprint_id)
+        except exc.SQLAlchemyError:
+            self.session.rollback()
+            raise internal_error
+
     def fetch_ongoing(self) -> Optional[DBSprint]:
         today = dt.date.today()
         try:

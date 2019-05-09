@@ -1,5 +1,5 @@
 import datetime as dt
-from typing import Optional
+from typing import Optional, List
 
 from pydantic import BaseModel
 
@@ -27,3 +27,10 @@ class TaskCreate(TaskBase):
 
 class Task(TaskBaseInDb):
     pass
+
+
+class TaskBoard(BaseModel):
+    todo: List[Task] = []
+    in_process: List[Task] = []
+    testing: List[Task] = []
+    done: List[Task] = []

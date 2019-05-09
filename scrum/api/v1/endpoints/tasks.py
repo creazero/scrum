@@ -7,10 +7,12 @@ from starlette.status import HTTP_400_BAD_REQUEST, HTTP_403_FORBIDDEN
 from scrum.api.utils.db import get_db
 from scrum.api.utils.projects import has_access_to_project, is_project_owner
 from scrum.api.utils.security import get_current_user
+from scrum.db_models.task import TaskState
 from scrum.db_models.user import User
-from scrum.models.task import Task, TaskCreate
+from scrum.models.task import Task, TaskCreate, TaskBoard
 from scrum.repositories.accessible_project import AccessibleProjectRepository
 from scrum.repositories.projects import ProjectRepository
+from scrum.repositories.sprints import SprintRepository
 from scrum.repositories.tasks import TaskRepository
 
 router = APIRouter()
@@ -70,3 +72,35 @@ def create_task(
         )
     task_repo = TaskRepository(session)
     return task_repo.create(task_in, current_user.id)
+
+
+@router.get('/tasks/board', response_model=TaskBoard)
+def get_task_board(
+        sprint_id: int,
+        *,
+        session: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user)
+):
+    sprint_repo = SprintRepository(session)
+    sprint = sprint_repo.fetch(sprint_id)
+    if sprint is None:
+        raise HTTPException(
+            status_code=HTTP_400_BAD_REQUEST,
+            detail='Спринта с данным id не существует'
+        )
+    if not has_access_to_project(session, current_user.id, sprint.project_id):
+        raise HTTPException(
+            status_code=HTTP_403_FORBIDDEN,
+            detail=f'Текущий пользователь не имеет доступа к проекту {sprint.project_id}'
+        )
+    task_board = TaskBoard()
+    for task in sprint.tasks:
+        if task.state == TaskState.todo:
+            task_board.todo.append(task)
+        elif task.state == TaskState.in_process:
+            task_board.in_process.append(task)
+        elif task.state == TaskState.testing:
+            task_board.testing.append(task)
+        elif task.state == TaskState.done:
+            task_board.done.append(task)
+    return task_board
