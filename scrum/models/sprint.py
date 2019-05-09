@@ -11,6 +11,7 @@ class SprintBase(BaseModel):
 
 class SprintBaseInDb(SprintBase):
     id: int
+    end_date: dt.date
 
 
 class SprintCreate(SprintBase):
@@ -18,7 +19,7 @@ class SprintCreate(SprintBase):
 
 
 class Sprint(SprintBaseInDb):
-    end_date: dt.date
+    pass
 
 
 class OngoingSprint(BaseModel):
