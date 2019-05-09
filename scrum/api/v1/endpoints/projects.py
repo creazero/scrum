@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from starlette.status import HTTP_404_NOT_FOUND, HTTP_500_INTERNAL_SERVER_ERROR, HTTP_403_FORBIDDEN
 
 from scrum.api.utils.db import get_db
-from scrum.api.utils.projects import has_access_to_project
+from scrum.api.utils.projects import has_access_to_project, is_project_owner
 from scrum.api.utils.security import get_current_user
 from scrum.db_models.user import User
 from scrum.models.project import Project, ProjectCreate
@@ -77,6 +77,11 @@ def delete_project(
         raise HTTPException(
             status_code=HTTP_403_FORBIDDEN,
             detail='У текущего пользователя нет доступа к данному проекту'
+        )
+    if not is_project_owner(session, current_user.id, project_id):
+        raise HTTPException(
+            status_code=HTTP_403_FORBIDDEN,
+            detail='Текущий пользователь не является владельцем проекта'
         )
     repository = ProjectRepository(session)
     repository.delete(project_id)
