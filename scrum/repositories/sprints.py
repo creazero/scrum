@@ -1,4 +1,5 @@
-from typing import List
+import datetime as dt
+from typing import List, Optional
 
 from fastapi import HTTPException
 from sqlalchemy import exc
@@ -25,6 +26,15 @@ class SprintRepository(object):
                     filter(DBSprint.project_id.in_(accessible_projects)).all()
             else:
                 return self.session.query(DBSprint).filter_by(project_id=project_id).all()
+        except exc.SQLAlchemyError:
+            self.session.rollback()
+            raise internal_error
+
+    def fetch_ongoing(self) -> Optional[DBSprint]:
+        today = dt.date.today()
+        try:
+            return self.session.query(DBSprint).filter(DBSprint.start_date <= today,
+                                                       DBSprint.end_date >= today).first()
         except exc.SQLAlchemyError:
             self.session.rollback()
             raise internal_error

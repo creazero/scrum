@@ -1,4 +1,5 @@
 import datetime as dt
+from typing import Optional
 
 from pydantic import BaseModel
 
@@ -18,3 +19,7 @@ class SprintCreate(SprintBase):
 
 class Sprint(SprintBaseInDb):
     end_date: dt.date
+
+
+class OngoingSprint(BaseModel):
+    sprint: Optional[Sprint]

@@ -9,7 +9,7 @@ from scrum.api.utils.projects import has_access_to_project, is_project_owner
 from scrum.api.utils.security import get_current_user
 from scrum.api.utils.sprints import has_intersecting_sprint
 from scrum.db_models.user import User
-from scrum.models.sprint import SprintCreate, Sprint
+from scrum.models.sprint import SprintCreate, Sprint, OngoingSprint
 from scrum.repositories.accessible_project import AccessibleProjectRepository
 from scrum.repositories.projects import ProjectRepository
 from scrum.repositories.sprints import SprintRepository
@@ -63,3 +63,26 @@ def create_sprint(
         )
     created_sprint = sprint_repo.create(sprint_in)
     return created_sprint
+
+
+@router.get('/sprints/ongoing', response_model=OngoingSprint)
+def ongoing_sprint(
+        project_id: int,
+        session: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user)
+):
+    project_repo = ProjectRepository(session)
+    if project_repo.fetch(project_id) is None:
+        raise HTTPException(
+            status_code=HTTP_400_BAD_REQUEST,
+            detail='Проекта с данным id не существует'
+        )
+    if not has_access_to_project(session, current_user.id, project_id):
+        raise HTTPException(
+            status_code=HTTP_403_FORBIDDEN,
+            detail=f'Текущий пользователь не имеет доступа к проекту {project_id}'
+        )
+    sprint_repo = SprintRepository(session)
+    return {
+        'sprint': sprint_repo.fetch_ongoing()
+    }
