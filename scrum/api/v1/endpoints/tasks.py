@@ -2,7 +2,7 @@ from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from starlette.status import HTTP_400_BAD_REQUEST, HTTP_403_FORBIDDEN
+from starlette.status import HTTP_400_BAD_REQUEST, HTTP_403_FORBIDDEN, HTTP_404_NOT_FOUND
 
 from scrum.api.utils.db import get_db
 from scrum.api.utils.projects import has_access_to_project, is_project_owner
@@ -72,6 +72,35 @@ def create_task(
         )
     task_repo = TaskRepository(session)
     return task_repo.create(task_in, current_user.id)
+
+
+@router.delete('/tasks/{task_id}')
+def delete_task(
+        task_id: int,
+        *,
+        session: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user)
+):
+    task_repo = TaskRepository(session)
+    task = task_repo.fetch(task_id)
+    if task is None:
+        raise HTTPException(
+            status_code=HTTP_404_NOT_FOUND,
+            detail='Задачи с данным id не существует'
+        )
+    if not has_access_to_project(session, current_user.id, task.project_id):
+        raise HTTPException(
+            status_code=HTTP_403_FORBIDDEN,
+            detail=f'Текущий пользователь не имеет доступа к проекту {task.project_id}'
+        )
+    if (not current_user.is_superuser and
+            not is_project_owner(session, current_user.id, task.project_id)):
+        raise HTTPException(
+            status_code=HTTP_403_FORBIDDEN,
+            detail='Текущий пользователь не имеет права на удаление задач в данном проекте'
+        )
+    task_repo.delete(task)
+    return {'status': 'ok'}
 
 
 @router.get('/tasks/board', response_model=TaskBoard)

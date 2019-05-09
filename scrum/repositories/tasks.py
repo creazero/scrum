@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 from fastapi import HTTPException
 from sqlalchemy import exc
@@ -21,6 +21,13 @@ class TaskRepository(object):
     def fetch_all(self) -> List[DBTask]:
         try:
             return self.session.query(DBTask).all()
+        except exc.SQLAlchemyError:
+            self.session.rollback()
+            raise internal_error
+
+    def fetch(self, task_id: int) -> Optional[DBTask]:
+        try:
+            return self.session.query(DBTask).get(task_id)
         except exc.SQLAlchemyError:
             self.session.rollback()
             raise internal_error
@@ -50,3 +57,11 @@ class TaskRepository(object):
             self.session.rollback()
             raise internal_error
         return new_task
+
+    def delete(self, task: DBTask) -> None:
+        self.session.delete(task)
+        try:
+            self.session.commit()
+        except exc.SQLAlchemyError:
+            self.session.rollback()
+            raise internal_error
