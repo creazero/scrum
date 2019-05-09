@@ -1,13 +1,18 @@
 from typing import List, Optional
 
 from fastapi import HTTPException
-from sqlalchemy import or_
+from sqlalchemy import or_, exc
 from sqlalchemy.orm import Session
 from starlette.status import HTTP_404_NOT_FOUND, HTTP_500_INTERNAL_SERVER_ERROR
 
 from scrum.db_models.project import Project as DBProject
 from scrum.models.project import ProjectCreate
 from scrum.repositories.accessible_project import AccessibleProjectRepository
+
+commit_exception = HTTPException(
+    status_code=HTTP_500_INTERNAL_SERVER_ERROR,
+    detail='Произошла внутренняя ошибка'
+)
 
 
 class ProjectRepository(object):
@@ -20,16 +25,16 @@ class ProjectRepository(object):
             accessible_projects = self.accessible_project_repo.fetch_accessible_for_user(user_id)
             return self.session.query(DBProject).\
                 filter(or_(DBProject.id.in_(accessible_projects), is_superuser))
-        except Exception:
+        except exc.SQLAlchemyError:
             self.session.rollback()
-            raise
+            raise commit_exception
 
     def fetch(self, project_id: int) -> Optional[DBProject]:
         try:
             return self.session.query(DBProject).get(project_id)
-        except Exception:
+        except exc.SQLAlchemyError:
             self.session.rollback()
-            raise
+            raise commit_exception
 
     def create(self, user_data: ProjectCreate, creator_id: int) -> DBProject:
         try:
@@ -40,9 +45,9 @@ class ProjectRepository(object):
             self.session.commit()
             self.session.refresh(new_project)
             return new_project
-        except Exception:
+        except exc.SQLAlchemyError:
             self.session.rollback()
-            raise
+            raise commit_exception
 
     def delete(self, project_id: int) -> None:
         project = self.fetch(project_id)
@@ -54,9 +59,6 @@ class ProjectRepository(object):
         self.session.delete(project)
         try:
             self.session.commit()
-        except Exception:
+        except exc.SQLAlchemyError:
             self.session.rollback()
-            raise HTTPException(
-                status_code=HTTP_500_INTERNAL_SERVER_ERROR,
-                detail='Произошла ошибка при удалении проекта'
-            )
+            raise commit_exception
