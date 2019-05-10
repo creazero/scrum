@@ -15,7 +15,6 @@ from scrum.db_models.user import User as DBUser
 from scrum.models.task import Task, TaskCreate, TaskBoard, TaskBoardUpdate, TaskAssign
 from scrum.models.users import User
 from scrum.repositories.accessible_project import AccessibleProjectRepository
-from scrum.repositories.projects import ProjectRepository
 from scrum.repositories.sprints import SprintRepository
 from scrum.repositories.tasks import TaskRepository
 from scrum.repositories.users import UserRepository
@@ -71,17 +70,17 @@ def delete_task(
             status_code=HTTP_404_NOT_FOUND,
             detail='Задачи с данным id не существует'
         )
-    if not has_access_to_project(session, current_user.id, task.project_id):
-        raise HTTPException(
-            status_code=HTTP_403_FORBIDDEN,
-            detail=f'Текущий пользователь не имеет доступа к проекту {task.project_id}'
-        )
-    if (not current_user.is_superuser and
-            not is_project_owner(session, current_user.id, task.project_id)):
-        raise HTTPException(
-            status_code=HTTP_403_FORBIDDEN,
-            detail='Текущий пользователь не имеет права на удаление задач в данном проекте'
-        )
+    if not current_user.is_superuser:
+        if not has_access_to_project(session, current_user.id, task.project_id):
+            raise HTTPException(
+                status_code=HTTP_403_FORBIDDEN,
+                detail=f'Текущий пользователь не имеет доступа к проекту {task.project_id}'
+            )
+        if not is_project_owner(session, current_user.id, task.project_id):
+            raise HTTPException(
+                status_code=HTTP_403_FORBIDDEN,
+                detail='Текущий пользователь не имеет права на удаление задач в данном проекте'
+            )
     task_repo.delete(task)
     return {'status': 'ok'}
 
@@ -234,3 +233,27 @@ def update_task_board(
             )
     task_repo.update_board(task_board.board)
     return {'status': 'ok'}
+
+
+@router.get('/tasks/{task_id}', response_model=Task)
+def get_task(
+        task_id: int,
+        *,
+        session: Session = Depends(get_db),
+        current_user: DBUser = Depends(get_current_user)
+):
+    task_repo = TaskRepository(session)
+    task = task_repo.fetch(task_id)
+    if (not current_user.is_superuser and
+            not has_access_to_project(session, current_user.id, task.project_id)):
+        raise HTTPException(
+            status_code=HTTP_403_FORBIDDEN,
+            detail=f'Текущий пользователь не имеет доступа к проекту {task.project_id}'
+        )
+    if task is None:
+        raise HTTPException(
+            status_code=HTTP_404_NOT_FOUND,
+            detail='Задачи с таким id не найдено'
+        )
+    task.creator = session.query(DBUser).get(task.creator_id)
+    return task
