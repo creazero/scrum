@@ -25,7 +25,14 @@ class UserUpdate(UserBaseInDb):
 
 # retrieve
 class User(UserBaseInDb):
-    pass
+
+    class Config:
+        allow_population_by_alias = True
+        fields = {
+            'full_name': 'fullName',
+            'is_active': 'isActive',
+            'is_superuser': 'isSuperuser',
+        }
 
 
 class UserInDb(UserBaseInDb):
