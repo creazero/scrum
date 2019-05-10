@@ -39,7 +39,14 @@ def get_tasks(
                 status_code=HTTP_403_FORBIDDEN,
                 detail=f'Текущий пользователь не имеет доступа к проекту {project_id}'
             )
-        return task_repo.fetch_from_project(project_id)
+        tasks = task_repo.fetch_from_project(project_id)
+        # TODO: probably rewrite needed
+        return [Task(name=task.name, desctiption=task.description,
+                     projectId=task.project_id, priority=task.priority,
+                     weight=task.weight, id=task.id, createdAt=task.created_at,
+                     sprintId=task.sprint_id, creatorId=task.creator_id,
+                     creator=task.creator.__dict__, assigneeId=task.assignee_id,
+                     state=task.state) for task in tasks]
     elif current_user.is_superuser:
         return task_repo.fetch_all()
     else:
@@ -55,18 +62,18 @@ def create_task(
         current_user: User = Depends(get_current_user)
 ):
     project_repo = ProjectRepository(session)
-    if project_repo.fetch(task_in.project_id) is None:
+    if project_repo.fetch(task_in.projectId) is None:
         raise HTTPException(
             status_code=HTTP_400_BAD_REQUEST,
             detail='Проекта с данным id не существует'
         )
-    if not has_access_to_project(session, current_user.id, task_in.project_id):
+    if not has_access_to_project(session, current_user.id, task_in.projectId):
         raise HTTPException(
             status_code=HTTP_403_FORBIDDEN,
-            detail=f'Текущий пользователь не имеет доступа к проекту {task_in.project_id}'
+            detail=f'Текущий пользователь не имеет доступа к проекту {task_in.projectId}'
         )
     if (not current_user.is_superuser and
-            not is_project_owner(session, current_user.id, task_in.project_id)):
+            not is_project_owner(session, current_user.id, task_in.projectId)):
         raise HTTPException(
             status_code=HTTP_403_FORBIDDEN,
             detail='Текущий пользователь не имеет права на создание задач в данном проекте'
@@ -183,7 +190,7 @@ def update_task_board(
                 status_code=HTTP_400_BAD_REQUEST,
                 detail=f'Задачи с id={task.id} не существует'
             )
-        if task.project_id != task_board.project_id or task.sprint_id != task_board.sprint_id:
+        if task.projectId != task_board.project_id or task.sprintId != task_board.sprint_id:
             raise HTTPException(
                 status_code=HTTP_400_BAD_REQUEST,
                 detail=f'Задача с id={task.id} не содержится в данном спринте'
