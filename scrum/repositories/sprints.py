@@ -33,6 +33,14 @@ class SprintRepository(object):
             self.session.rollback()
             raise internal_error
 
+    def fetch_by_project(self, project_id: int) -> List[DBSprint]:
+        try:
+            return self.session.query(DBSprint).filter_by(project_id=project_id).all()
+        except exc.SQLAlchemyError as e:
+            logger.error(e)
+            self.session.rollback()
+            raise internal_error
+
     def fetch(self, sprint_id: int) -> Optional[DBSprint]:
         try:
             return self.session.query(DBSprint).get(sprint_id)

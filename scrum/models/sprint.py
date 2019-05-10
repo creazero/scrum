@@ -31,3 +31,16 @@ class Sprint(SprintBaseInDb):
 
 class OngoingSprint(BaseModel):
     sprint: Optional[Sprint]
+
+
+class IntersectionCheck(BaseModel):
+    start_date: dt.date
+    project_id: int
+
+    class Config:
+        allow_population_by_alias = True
+        fields = {
+            'start_date': 'startDate',
+            'project_id': 'projectId',
+        }
+

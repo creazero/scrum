@@ -9,7 +9,7 @@ from scrum.api.utils.projects import has_access_to_project, is_project_owner
 from scrum.api.utils.security import get_current_user
 from scrum.api.utils.sprints import has_intersecting_sprint
 from scrum.db_models.user import User
-from scrum.models.sprint import SprintCreate, Sprint, OngoingSprint
+from scrum.models.sprint import SprintCreate, Sprint, OngoingSprint, IntersectionCheck
 from scrum.repositories.accessible_project import AccessibleProjectRepository
 from scrum.repositories.projects import ProjectRepository
 from scrum.repositories.sprints import SprintRepository
@@ -85,4 +85,29 @@ def ongoing_sprint(
     sprint_repo = SprintRepository(session)
     return {
         'sprint': sprint_repo.fetch_ongoing()
+    }
+
+
+@router.post('/sprints/intersection')
+def check_intersection(
+        data: IntersectionCheck,
+        *,
+        session: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user)
+):
+    project_repo = ProjectRepository(session)
+    if project_repo.fetch(data.project_id) is None:
+        raise HTTPException(
+            status_code=HTTP_400_BAD_REQUEST,
+            detail='Проекта с данным id не существует'
+        )
+    if not has_access_to_project(session, current_user.id, data.project_id):
+        raise HTTPException(
+            status_code=HTTP_403_FORBIDDEN,
+            detail=f'Текущий пользователь не имеет доступа к проекту {data.project_id}'
+        )
+    sprint_repo = SprintRepository(session)
+    all_sprints = sprint_repo.fetch_by_project(data.project_id)
+    return {
+        'has_intersection': has_intersecting_sprint(data.start_date, all_sprints)
     }
