@@ -19,7 +19,14 @@ class SprintCreate(SprintBase):
 
 
 class Sprint(SprintBaseInDb):
-    pass
+
+    class Config:
+        allow_population_by_alias = True
+        fields = {
+            'start_date': 'startDate',
+            'end_date': 'endDate',
+            'project_id': 'projectId',
+        }
 
 
 class OngoingSprint(BaseModel):
