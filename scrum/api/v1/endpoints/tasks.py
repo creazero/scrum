@@ -8,6 +8,7 @@ from starlette.status import HTTP_400_BAD_REQUEST, HTTP_403_FORBIDDEN, HTTP_404_
 from scrum.api.utils.db import get_db
 from scrum.api.utils.projects import has_access_to_project, is_project_owner
 from scrum.api.utils.security import get_current_user
+from scrum.api.utils.tasks import tasks_response
 from scrum.db_models.task_state import TaskState
 from scrum.db_models.user import User as DBUser
 from scrum.models.task import Task, TaskCreate, TaskBoard, TaskBoardUpdate
@@ -45,10 +46,7 @@ def get_tasks(
     else:
         accessible_repo = AccessibleProjectRepository(session)
         tasks = task_repo.fetch_accessible(accessible_repo.fetch_accessible_for_user(current_user.id))
-    # ew
-    for task in tasks:
-        task.creator = session.query(DBUser).get(task.creator_id)
-    return tasks
+    return tasks_response(tasks)
 
 
 @router.post('/tasks', response_model=Task, status_code=201)
