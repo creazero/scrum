@@ -74,7 +74,8 @@ class TaskRepository(object):
     def update(self, task: DBTask, **kwargs) -> DBTask:
         self.session.begin()
         for attr, value in kwargs.items():
-            setattr(task, attr, value)
+            if attr != 'id':
+                setattr(task, attr, value)
         try:
             self.session.commit()
             return task

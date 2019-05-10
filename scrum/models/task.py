@@ -1,7 +1,7 @@
 import datetime as dt
 from typing import Optional, List
 
-from pydantic import BaseModel, Schema
+from pydantic import BaseModel
 
 from scrum.db_models.task_state import TaskState
 from scrum.models.users import User
@@ -13,6 +13,12 @@ class TaskBase(BaseModel):
     project_id: int
     priority: int
     weight: int
+
+    class Config:
+        allow_population_by_alias = True
+        fields = {
+            'project_id': 'projectId',
+        }
 
 
 class TaskBaseInDb(TaskBase):
