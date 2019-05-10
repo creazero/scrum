@@ -8,8 +8,8 @@ from starlette.status import HTTP_400_BAD_REQUEST, HTTP_403_FORBIDDEN, HTTP_404_
 from scrum.api.utils.db import get_db
 from scrum.api.utils.projects import has_access_to_project, is_project_owner
 from scrum.api.utils.security import get_current_user
-from scrum.db_models.task import TaskState
-from scrum.db_models.user import User
+from scrum.db_models.task_state import TaskState
+from scrum.db_models.user import User as DBUser
 from scrum.models.task import Task, TaskCreate, TaskBoard, TaskBoardUpdate
 from scrum.repositories.accessible_project import AccessibleProjectRepository
 from scrum.repositories.projects import ProjectRepository
@@ -24,7 +24,7 @@ def get_tasks(
         project_id: int = None,
         *,
         session: Session = Depends(get_db),
-        current_user: User = Depends(get_current_user)
+        current_user: DBUser = Depends(get_current_user)
 ):
     task_repo = TaskRepository(session)
     if project_id is not None:
@@ -40,18 +40,15 @@ def get_tasks(
                 detail=f'Текущий пользователь не имеет доступа к проекту {project_id}'
             )
         tasks = task_repo.fetch_from_project(project_id)
-        # TODO: probably rewrite needed
-        return [Task(name=task.name, desctiption=task.description,
-                     projectId=task.project_id, priority=task.priority,
-                     weight=task.weight, id=task.id, createdAt=task.created_at,
-                     sprintId=task.sprint_id, creatorId=task.creator_id,
-                     creator=task.creator.__dict__, assigneeId=task.assignee_id,
-                     state=task.state) for task in tasks]
     elif current_user.is_superuser:
-        return task_repo.fetch_all()
+        tasks = task_repo.fetch_all()
     else:
         accessible_repo = AccessibleProjectRepository(session)
-        return task_repo.fetch_accessible(accessible_repo.fetch_accessible_for_user(current_user.id))
+        tasks = task_repo.fetch_accessible(accessible_repo.fetch_accessible_for_user(current_user.id))
+    # ew
+    for task in tasks:
+        task.creator = session.query(DBUser).get(task.creator_id)
+    return tasks
 
 
 @router.post('/tasks', response_model=Task, status_code=201)
@@ -59,7 +56,7 @@ def create_task(
         task_in: TaskCreate,
         *,
         session: Session = Depends(get_db),
-        current_user: User = Depends(get_current_user)
+        current_user: DBUser = Depends(get_current_user)
 ):
     project_repo = ProjectRepository(session)
     if project_repo.fetch(task_in.projectId) is None:
@@ -87,7 +84,7 @@ def delete_task(
         task_id: int,
         *,
         session: Session = Depends(get_db),
-        current_user: User = Depends(get_current_user)
+        current_user: DBUser = Depends(get_current_user)
 ):
     task_repo = TaskRepository(session)
     task = task_repo.fetch(task_id)
@@ -116,7 +113,7 @@ def get_task_board(
         sprint_id: int,
         *,
         session: Session = Depends(get_db),
-        current_user: User = Depends(get_current_user)
+        current_user: DBUser = Depends(get_current_user)
 ):
     sprint_repo = SprintRepository(session)
     sprint = sprint_repo.fetch(sprint_id)
@@ -132,6 +129,7 @@ def get_task_board(
         )
     task_board = TaskBoard()
     for task in sprint.tasks:
+        task.creator = session.query(DBUser).get(task.creator_id)
         if task.state == TaskState.todo:
             task_board.todo.append(task)
         elif task.state == TaskState.in_process:
@@ -148,7 +146,7 @@ def update_task_board(
         task_board: TaskBoardUpdate,
         *,
         session: Session = Depends(get_db),
-        current_user: User = Depends(get_current_user)
+        current_user: DBUser = Depends(get_current_user)
 ):
     project_repo = ProjectRepository(session)
     if project_repo.fetch(task_board.project_id) is None:
