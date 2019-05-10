@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from starlette.status import HTTP_500_INTERNAL_SERVER_ERROR
 
 from scrum.core.security import get_password_hash
+from scrum.db_models.accessible_project import AccessibleProject
 from scrum.db_models.user import User as DBUser
 from scrum.models.users import UserAuth
 
@@ -26,6 +27,7 @@ class UserRepository(object):
             username=user_in.username,
             hashed_password=get_password_hash(user_in.password)
         )
+        self.session.begin()
         self.session.add(user)
         try:
             self.session.commit()
@@ -39,6 +41,25 @@ class UserRepository(object):
     def fetch_all(self) -> List[DBUser]:
         try:
             return self.session.query(DBUser).all()
+        except exc.SQLAlchemyError as e:
+            logger.error(e)
+            raise commit_exception
+
+    def fetch_by_project(self, project_id: int) -> List[DBUser]:
+        try:
+            accessible: List[AccessibleProject] = self.session.query(AccessibleProject)\
+                .filter_by(project_id=project_id).all()
+            ids = [row.user_id for row in accessible]
+            return self.session.query(DBUser).filter(DBUser.id.in_(ids)).all()
+        except exc.SQLAlchemyError as e:
+            logger.error(e)
+            raise commit_exception
+
+    def fetch_from_accessible(self, current_user: int) -> List[DBUser]:
+        try:
+            accessible: List[AccessibleProject] = self.session.query(AccessibleProject)\
+                .filter_by(user_id=current_user).all()
+            return self.session.query(DBUser).filter(DBUser.id.in_([row.user_id for row in accessible])).all()
         except exc.SQLAlchemyError as e:
             logger.error(e)
             raise commit_exception

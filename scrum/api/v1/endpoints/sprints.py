@@ -38,8 +38,8 @@ def create_sprint(
         current_user: User = Depends(get_current_user)
 ):
     validate_project(current_user.id, sprint_in.project_id,
-                     session=session, check_owner=True,
-                     is_superuser=current_user.is_superuser)
+                     current_user.is_superuser,
+                     session=session, check_owner=True)
     sprint_repo = SprintRepository(session)
     # get all sprints for the intersection check
     sprints = sprint_repo.fetch_all([], sprint_in.project_id)
