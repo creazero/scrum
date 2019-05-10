@@ -31,7 +31,7 @@ class Task(TaskBaseInDb):
 
 class TaskBoard(BaseModel):
     todo: List[Task] = []
-    in_process: List[Task] = []
+    inProcess: List[Task] = []
     testing: List[Task] = []
     done: List[Task] = []
 

@@ -128,7 +128,7 @@ def get_task_board(
         if task.state == TaskState.todo:
             task_board.todo.append(task)
         elif task.state == TaskState.in_process:
-            task_board.in_process.append(task)
+            task_board.inProcess.append(task)
         elif task.state == TaskState.testing:
             task_board.testing.append(task)
         elif task.state == TaskState.done:
@@ -172,7 +172,7 @@ def update_task_board(
             status_code=HTTP_400_BAD_REQUEST,
             detail=f'Спринт с id={task_board.sprint_id} не является активным'
         )
-    cols = [task_board.board.todo, task_board.board.in_process,
+    cols = [task_board.board.todo, task_board.board.inProcess,
             task_board.board.testing, task_board.board.done]
     tasks = [nested_task for sublist in cols for nested_task in sublist]
     task_repo = TaskRepository(session)

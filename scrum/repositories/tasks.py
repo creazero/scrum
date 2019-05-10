@@ -75,7 +75,7 @@ class TaskRepository(object):
         try:
             self.session.begin()
             self._update_state(board.todo, TaskState.todo)
-            self._update_state(board.in_process, TaskState.in_process)
+            self._update_state(board.inProcess, TaskState.in_process)
             self._update_state(board.testing, TaskState.testing)
             self._update_state(board.done, TaskState.done)
             self.session.commit()
