@@ -2,11 +2,12 @@ from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from starlette.status import HTTP_403_FORBIDDEN, HTTP_400_BAD_REQUEST
+from starlette.status import HTTP_403_FORBIDDEN, HTTP_400_BAD_REQUEST, HTTP_404_NOT_FOUND
 
 from scrum.api.utils.db import get_db
 from scrum.api.utils.projects import has_access_to_project, is_project_owner
 from scrum.api.utils.security import get_current_user
+from scrum.api.utils.shared import validate_project
 from scrum.api.utils.sprints import has_intersecting_sprint
 from scrum.db_models.user import User
 from scrum.models.sprint import SprintCreate, Sprint, OngoingSprint, IntersectionCheck
@@ -36,23 +37,9 @@ def create_sprint(
         session: Session = Depends(get_db),
         current_user: User = Depends(get_current_user)
 ):
-    project_repo = ProjectRepository(session)
-    if project_repo.fetch(sprint_in.project_id) is None:
-        raise HTTPException(
-            status_code=HTTP_400_BAD_REQUEST,
-            detail='Проекта с данным id не существует'
-        )
-    if not has_access_to_project(session, current_user.id, sprint_in.project_id):
-        raise HTTPException(
-            status_code=HTTP_403_FORBIDDEN,
-            detail=f'Текущий пользователь не имеет доступа к проекту {sprint_in.project_id}'
-        )
-    if (not current_user.is_superuser and
-            not is_project_owner(session, current_user.id, sprint_in.project_id)):
-        raise HTTPException(
-            status_code=HTTP_403_FORBIDDEN,
-            detail='Текущий пользователь не имеет права на создание спринтов в данном проекте'
-        )
+    validate_project(current_user.id, sprint_in.project_id,
+                     session=session, check_owner=True,
+                     is_superuser=current_user.is_superuser)
     sprint_repo = SprintRepository(session)
     # get all sprints for the intersection check
     sprints = sprint_repo.fetch_all([], sprint_in.project_id)
@@ -63,6 +50,27 @@ def create_sprint(
         )
     created_sprint = sprint_repo.create(sprint_in)
     return created_sprint
+
+
+@router.delete('/sprints/{sprint_id}')
+def delete_sprint(
+        sprint_id: int,
+        *,
+        session: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user)
+):
+    sprint_repo = SprintRepository(session)
+    sprint = sprint_repo.fetch(sprint_id)
+    if sprint is None:
+        raise HTTPException(
+            status_code=HTTP_404_NOT_FOUND,
+            detail='Спринта с таким id не существует'
+        )
+    validate_project(current_user.id, sprint.project_id,
+                     session=session, check_owner=True,
+                     is_superuser=current_user.is_superuser)
+    sprint_repo.delete(sprint)
+    return {'status': 'ok'}
 
 
 @router.get('/sprints/ongoing', response_model=OngoingSprint)

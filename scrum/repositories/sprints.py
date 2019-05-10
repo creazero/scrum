@@ -79,3 +79,15 @@ class SprintRepository(object):
             self.session.rollback()
             raise internal_error
         return sprint
+
+    def delete(self, sprint: DBSprint) -> None:
+        self.session.begin()
+        for task in sprint.tasks:
+            task.state = None
+        try:
+            self.session.delete(sprint)
+            self.session.commit()
+        except exc.SQLAlchemyError as e:
+            logger.error(e)
+            self.session.rollback()
+            raise internal_error
