@@ -8,6 +8,7 @@ from starlette.status import HTTP_400_BAD_REQUEST, HTTP_403_FORBIDDEN, HTTP_404_
 from scrum.api.utils.db import get_db
 from scrum.api.utils.projects import has_access_to_project, is_project_owner
 from scrum.api.utils.security import get_current_user
+from scrum.api.utils.shared import validate_project
 from scrum.api.utils.tasks import tasks_response
 from scrum.db_models.task_state import TaskState
 from scrum.db_models.user import User as DBUser
@@ -29,17 +30,7 @@ def get_tasks(
 ):
     task_repo = TaskRepository(session)
     if project_id is not None:
-        project_repo = ProjectRepository(session)
-        if project_repo.fetch(project_id) is None:
-            raise HTTPException(
-                status_code=HTTP_400_BAD_REQUEST,
-                detail='Проекта с данным id не существует'
-            )
-        if not has_access_to_project(session, current_user.id, project_id):
-            raise HTTPException(
-                status_code=HTTP_403_FORBIDDEN,
-                detail=f'Текущий пользователь не имеет доступа к проекту {project_id}'
-            )
+        validate_project(current_user.id, project_id, session=session)
         tasks = task_repo.fetch_from_project(project_id)
     elif current_user.is_superuser:
         tasks = task_repo.fetch_all()
@@ -56,23 +47,8 @@ def create_task(
         session: Session = Depends(get_db),
         current_user: DBUser = Depends(get_current_user)
 ):
-    project_repo = ProjectRepository(session)
-    if project_repo.fetch(task_in.project_id) is None:
-        raise HTTPException(
-            status_code=HTTP_400_BAD_REQUEST,
-            detail='Проекта с данным id не существует'
-        )
-    if not has_access_to_project(session, current_user.id, task_in.project_id):
-        raise HTTPException(
-            status_code=HTTP_403_FORBIDDEN,
-            detail=f'Текущий пользователь не имеет доступа к проекту {task_in.project_id}'
-        )
-    if (not current_user.is_superuser and
-            not is_project_owner(session, current_user.id, task_in.project_id)):
-        raise HTTPException(
-            status_code=HTTP_403_FORBIDDEN,
-            detail='Текущий пользователь не имеет права на создание задач в данном проекте'
-        )
+    validate_project(current_user.id, task_in.project_id, session=session,
+                     check_owner=True, is_superuser=current_user.is_superuser)
     task_repo = TaskRepository(session)
     task_repo.create(task_in, current_user.id)
     return {'status': 'ok'}
@@ -147,17 +123,7 @@ def update_task_board(
         session: Session = Depends(get_db),
         current_user: DBUser = Depends(get_current_user)
 ):
-    project_repo = ProjectRepository(session)
-    if project_repo.fetch(task_board.project_id) is None:
-        raise HTTPException(
-            status_code=HTTP_400_BAD_REQUEST,
-            detail='Проекта с данным id не существует'
-        )
-    if not has_access_to_project(session, current_user.id, task_board.project_id):
-        raise HTTPException(
-            status_code=HTTP_403_FORBIDDEN,
-            detail=f'Текущий пользователь не имеет доступа к проекту {task_board.project_id}'
-        )
+    validate_project(current_user.id, task_board.project_id, session=session)
     sprint_repo = SprintRepository(session)
     sprint = sprint_repo.fetch(task_board.sprint_id)
     if sprint is None:

@@ -79,17 +79,7 @@ def ongoing_sprint(
         session: Session = Depends(get_db),
         current_user: User = Depends(get_current_user)
 ):
-    project_repo = ProjectRepository(session)
-    if project_repo.fetch(project_id) is None:
-        raise HTTPException(
-            status_code=HTTP_400_BAD_REQUEST,
-            detail='Проекта с данным id не существует'
-        )
-    if not has_access_to_project(session, current_user.id, project_id):
-        raise HTTPException(
-            status_code=HTTP_403_FORBIDDEN,
-            detail=f'Текущий пользователь не имеет доступа к проекту {project_id}'
-        )
+    validate_project(current_user.id, project_id, session=session)
     sprint_repo = SprintRepository(session)
     return {
         'sprint': sprint_repo.fetch_ongoing()
@@ -103,17 +93,7 @@ def check_intersection(
         session: Session = Depends(get_db),
         current_user: User = Depends(get_current_user)
 ):
-    project_repo = ProjectRepository(session)
-    if project_repo.fetch(data.project_id) is None:
-        raise HTTPException(
-            status_code=HTTP_400_BAD_REQUEST,
-            detail='Проекта с данным id не существует'
-        )
-    if not has_access_to_project(session, current_user.id, data.project_id):
-        raise HTTPException(
-            status_code=HTTP_403_FORBIDDEN,
-            detail=f'Текущий пользователь не имеет доступа к проекту {data.project_id}'
-        )
+    validate_project(current_user.id, data.project_id, session=session)
     sprint_repo = SprintRepository(session)
     all_sprints = sprint_repo.fetch_by_project(data.project_id)
     return {
