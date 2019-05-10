@@ -12,11 +12,13 @@ from scrum.api.utils.shared import validate_project
 from scrum.api.utils.tasks import tasks_response
 from scrum.db_models.task_state import TaskState
 from scrum.db_models.user import User as DBUser
-from scrum.models.task import Task, TaskCreate, TaskBoard, TaskBoardUpdate
+from scrum.models.task import Task, TaskCreate, TaskBoard, TaskBoardUpdate, TaskAssign
+from scrum.models.users import User
 from scrum.repositories.accessible_project import AccessibleProjectRepository
 from scrum.repositories.projects import ProjectRepository
 from scrum.repositories.sprints import SprintRepository
 from scrum.repositories.tasks import TaskRepository
+from scrum.repositories.users import UserRepository
 
 router = APIRouter()
 
@@ -82,6 +84,76 @@ def delete_task(
         )
     task_repo.delete(task)
     return {'status': 'ok'}
+
+
+@router.post('/tasks/assign', response_model=User)
+def assign_user(
+        data: TaskAssign,
+        *,
+        session: Session = Depends(get_db),
+        current_user: DBUser = Depends(get_current_user)
+):
+    task_repo = TaskRepository(session)
+    task = task_repo.fetch(data.task_id)
+    if (not current_user.is_superuser and
+            not has_access_to_project(session, current_user.id, task.project_id)):
+        raise HTTPException(
+            status_code=HTTP_403_FORBIDDEN,
+            detail=f'Текущий пользователь не имеет доступа к проекту {task.project_id}'
+        )
+    if task is None:
+        raise HTTPException(
+            status_code=HTTP_404_NOT_FOUND,
+            detail='Задачи с таким id не существует'
+        )
+    if data.user_id != 0:
+        user_repo = UserRepository(session)
+        user = user_repo.fetch(data.user_id)
+        if user is None:
+            raise HTTPException(
+                status_code=HTTP_400_BAD_REQUEST,
+                detail='Пользователя с таким id не существует'
+            )
+        if (not user.is_superuser and
+                not has_access_to_project(session, user.id, task.project_id)):
+            raise HTTPException(
+                status_code=HTTP_403_FORBIDDEN,
+                detail=f'Назначаемый пользователь не имеет доступа к проекту {task.project_id}'
+            )
+        if not user.is_active:
+            raise HTTPException(
+                status_code=HTTP_400_BAD_REQUEST,
+                detail='Пользователь с таким id не активен'
+            )
+        task = task_repo.update(task, assignee_id=user.id)
+        return user
+    else:
+        task = task_repo.update(task, assgnee_id=current_user.id)
+        return current_user
+
+
+@router.post('/tasks/assign_me/{task_id}', response_model=User)
+def assign_me(
+        task_id: int,
+        *,
+        session: Session = Depends(get_db),
+        current_user: DBUser = Depends(get_current_user)
+):
+    task_repo = TaskRepository(session)
+    task = task_repo.fetch(task_id)
+    if task is None:
+        raise HTTPException(
+            status_code=HTTP_404_NOT_FOUND,
+            detail='Задачи с таким id не существует'
+        )
+    if (not current_user.is_superuser and
+            not has_access_to_project(session, current_user.id, task.project_id)):
+        raise HTTPException(
+            status_code=HTTP_403_FORBIDDEN,
+            detail=f'Текущий пользователь не имеет доступа к проекту {task.project_id}'
+        )
+    task = task_repo.update(task, assignee_id=current_user.id)
+    return current_user
 
 
 @router.get('/tasks/board', response_model=TaskBoard)
@@ -155,7 +227,7 @@ def update_task_board(
                 status_code=HTTP_400_BAD_REQUEST,
                 detail=f'Задачи с id={task.id} не существует'
             )
-        if task.projectId != task_board.project_id or task.sprintId != task_board.sprint_id:
+        if task.project_id != task_board.project_id or task.sprint_id != task_board.sprint_id:
             raise HTTPException(
                 status_code=HTTP_400_BAD_REQUEST,
                 detail=f'Задача с id={task.id} не содержится в данном спринте'

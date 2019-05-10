@@ -53,3 +53,15 @@ class TaskBoardUpdate(BaseModel):
     board: TaskBoard
     project_id: int
     sprint_id: int
+
+
+class TaskAssign(BaseModel):
+    user_id: int
+    task_id: int
+
+    class Config:
+        allow_population_by_alias = True
+        fields = {
+            'user_id': 'userId',
+            'task_id': 'taskId'
+        }

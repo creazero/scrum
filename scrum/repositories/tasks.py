@@ -71,6 +71,18 @@ class TaskRepository(object):
             self.session.rollback()
             raise internal_error
 
+    def update(self, task: DBTask, **kwargs) -> DBTask:
+        self.session.begin()
+        for attr, value in kwargs.items():
+            setattr(task, attr, value)
+        try:
+            self.session.commit()
+            return task
+        except exc.SQLAlchemyError as e:
+            logger.error(e)
+            self.session.rollback()
+            raise internal_error
+
     def update_board(self, board: TaskBoard) -> None:
         try:
             self.session.begin()
