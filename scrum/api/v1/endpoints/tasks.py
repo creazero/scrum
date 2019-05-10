@@ -30,7 +30,8 @@ def get_tasks(
 ):
     task_repo = TaskRepository(session)
     if project_id is not None:
-        validate_project(current_user.id, project_id, session=session)
+        validate_project(current_user.id, project_id,
+                         current_user.is_superuser, session=session)
         tasks = task_repo.fetch_from_project(project_id)
     elif current_user.is_superuser:
         tasks = task_repo.fetch_all()
@@ -123,7 +124,8 @@ def update_task_board(
         session: Session = Depends(get_db),
         current_user: DBUser = Depends(get_current_user)
 ):
-    validate_project(current_user.id, task_board.project_id, session=session)
+    validate_project(current_user.id, task_board.project_id,
+                     current_user.is_superuser, session=session)
     sprint_repo = SprintRepository(session)
     sprint = sprint_repo.fetch(task_board.sprint_id)
     if sprint is None:

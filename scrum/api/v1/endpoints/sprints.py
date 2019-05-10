@@ -79,7 +79,8 @@ def ongoing_sprint(
         session: Session = Depends(get_db),
         current_user: User = Depends(get_current_user)
 ):
-    validate_project(current_user.id, project_id, session=session)
+    validate_project(current_user.id, project_id,
+                     current_user.is_superuser, session=session)
     sprint_repo = SprintRepository(session)
     return {
         'sprint': sprint_repo.fetch_ongoing()
@@ -93,7 +94,8 @@ def check_intersection(
         session: Session = Depends(get_db),
         current_user: User = Depends(get_current_user)
 ):
-    validate_project(current_user.id, data.project_id, session=session)
+    validate_project(current_user.id, data.project_id,
+                     current_user.is_superuser, session=session)
     sprint_repo = SprintRepository(session)
     all_sprints = sprint_repo.fetch_by_project(data.project_id)
     return {

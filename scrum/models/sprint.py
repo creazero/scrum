@@ -17,6 +17,13 @@ class SprintBaseInDb(SprintBase):
 class SprintCreate(SprintBase):
     tasks: List[int] = []
 
+    class Config:
+        allow_population_by_alias = True
+        fields = {
+            'start_date': 'startDate',
+            'project_id': 'projectId',
+        }
+
 
 class Sprint(SprintBaseInDb):
 
