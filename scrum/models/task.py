@@ -34,3 +34,9 @@ class TaskBoard(BaseModel):
     in_process: List[Task] = []
     testing: List[Task] = []
     done: List[Task] = []
+
+
+class TaskBoardUpdate(BaseModel):
+    board: TaskBoard
+    project_id: int
+    sprint_id: int

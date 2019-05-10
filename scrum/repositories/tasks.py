@@ -6,8 +6,8 @@ from sqlalchemy import exc
 from sqlalchemy.orm import Session
 from starlette.status import HTTP_500_INTERNAL_SERVER_ERROR
 
-from scrum.db_models.task import Task as DBTask
-from scrum.models.task import TaskCreate
+from scrum.db_models.task import Task as DBTask, TaskState
+from scrum.models.task import TaskCreate, TaskBoard, Task
 
 internal_error = HTTPException(
     status_code=HTTP_500_INTERNAL_SERVER_ERROR,
@@ -70,3 +70,23 @@ class TaskRepository(object):
             logger.error(e)
             self.session.rollback()
             raise internal_error
+
+    def update_board(self, board: TaskBoard) -> None:
+        try:
+            self.session.begin()
+            self._update_state(board.todo, TaskState.todo)
+            self._update_state(board.in_process, TaskState.in_process)
+            self._update_state(board.testing, TaskState.testing)
+            self._update_state(board.done, TaskState.done)
+            self.session.commit()
+        except exc.SQLAlchemyError as e:
+            logger.error(e)
+            self.session.rollback()
+            raise internal_error
+
+    def _update_state(self, tasks: List[Task], state: TaskState):
+        for task in tasks:
+            task_db: DBTask = self.fetch(task.id)
+            if task_db.state != state:
+                task_db.state = state
+                self.session.add(task_db)
