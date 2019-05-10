@@ -8,6 +8,8 @@ from sqlalchemy.orm import Session
 from starlette.status import HTTP_500_INTERNAL_SERVER_ERROR
 
 from scrum.db_models.sprint import Sprint as DBSprint
+from scrum.db_models.task import Task
+from scrum.db_models.task_state import TaskState
 from scrum.models.sprint import SprintCreate
 
 internal_error = HTTPException(
@@ -64,6 +66,11 @@ class SprintRepository(object):
                           project_id=sprint_in.project_id)
         self.session.begin()
         self.session.add(sprint)
+        self.session.flush()
+        for task_id in sprint_in.tasks:
+            task_db: Task = self.session.query(Task).get(task_id)
+            task_db.sprint_id = sprint.id
+            task_db.state = TaskState.todo
         try:
             self.session.commit()
             self.session.refresh(sprint)

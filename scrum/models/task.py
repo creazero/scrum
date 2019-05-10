@@ -20,7 +20,6 @@ class TaskBaseInDb(TaskBase):
     created_at: dt.datetime
     sprint_id: Optional[int]
     creator_id: int
-    creator: User
     assignee_id: Optional[int]
     state: Optional[TaskState] = None
 
@@ -30,6 +29,7 @@ class TaskCreate(TaskBase):
 
 
 class Task(TaskBaseInDb):
+    creator: User
 
     class Config:
         allow_population_by_alias = True

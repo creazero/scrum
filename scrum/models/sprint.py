@@ -1,5 +1,5 @@
 import datetime as dt
-from typing import Optional
+from typing import Optional, List
 
 from pydantic import BaseModel
 
@@ -15,7 +15,7 @@ class SprintBaseInDb(SprintBase):
 
 
 class SprintCreate(SprintBase):
-    pass
+    tasks: List[int] = []
 
 
 class Sprint(SprintBaseInDb):

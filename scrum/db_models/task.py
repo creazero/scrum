@@ -28,7 +28,7 @@ class Task(Base):
         super().__init__(**kwargs)
         self.name = task_in.name
         self.description = task_in.description
-        self.project_id = task_in.projectId
+        self.project_id = task_in.project_id
         self.priority = task_in.priority
         self.weight = task_in.weight
         self.creator_id = creator_id
