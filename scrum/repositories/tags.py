@@ -34,6 +34,16 @@ class TagRepository(object):
             self.session.rollback()
             raise internal_error
 
+    def delete(self, tag: DBTag) -> None:
+        self.session.begin()
+        self.session.delete(tag)
+        try:
+            self.session.commit()
+        except exc.SQLAlchemyError as e:
+            self.session.rollback()
+            logger.error(e)
+            raise internal_error
+
     def fetch(self, tag_id: int) -> Optional[DBTag]:
         try:
             return self.session.query(DBTag).get(tag_id)

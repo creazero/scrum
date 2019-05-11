@@ -71,5 +71,20 @@ def update_tag(tag_id: int):
 
 
 @router.delete('/tags/{tag_id}')
-def delete_tag(tag_id: int):
-    return {'dumb': 'ok'}
+def delete_tag(
+        tag_id: int,
+        *,
+        session: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user)
+):
+    tag_repo = TagRepository(session)
+    tag = tag_repo.fetch(tag_id)
+    if tag is None:
+        raise HTTPException(
+            status_code=HTTP_404_NOT_FOUND,
+            detail='Тега с таким id не существует'
+        )
+    validate_project(current_user.id, tag.project_id,
+                     current_user.is_superuser, session=session)
+    tag_repo.delete(tag)
+    return {'status': 'ok'}
