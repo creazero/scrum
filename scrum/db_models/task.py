@@ -1,6 +1,6 @@
 import datetime as dt
 
-from sqlalchemy import Column, String, Integer, ForeignKey, DateTime, Enum
+from sqlalchemy import Column, String, Integer, ForeignKey, DateTime, Enum, Date
 from sqlalchemy.orm import relationship
 
 from scrum.db.base_class import Base
@@ -24,6 +24,7 @@ class Task(Base):
     weight = Column(Integer)
     priority = Column(Integer, nullable=False, default=0)
     state = Column(Enum(TaskState))
+    done_date = Column(Date, default=dt.date.today)
     tags = relationship('Tag', secondary=tags_association)
 
     def __init__(self, task_in: TaskCreate, creator_id: int, **kwargs):

@@ -1,3 +1,4 @@
+import datetime as dt
 import logging
 from typing import List, Optional
 
@@ -102,5 +103,8 @@ class TaskRepository(object):
         for task in tasks:
             task_db: DBTask = self.fetch(task.id)
             if task_db.state != state:
+                if task_db.state == TaskState.done:
+                    task_db.done_date = None
+                elif state == TaskState.done:
+                    task_db.done_date = dt.date.today()
                 task_db.state = state
-                self.session.add(task_db)
