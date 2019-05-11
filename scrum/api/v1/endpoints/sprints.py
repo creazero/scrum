@@ -83,7 +83,7 @@ def ongoing_sprint(
                      current_user.is_superuser, session=session)
     sprint_repo = SprintRepository(session)
     return {
-        'sprint': sprint_repo.fetch_ongoing()
+        'sprint': sprint_repo.fetch_ongoing(project_id)
     }
 
 

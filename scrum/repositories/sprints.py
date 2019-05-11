@@ -51,10 +51,11 @@ class SprintRepository(object):
             self.session.rollback()
             raise internal_error
 
-    def fetch_ongoing(self) -> Optional[DBSprint]:
+    def fetch_ongoing(self, project_id: int) -> Optional[DBSprint]:
         today = dt.date.today()
         try:
-            return self.session.query(DBSprint).filter(DBSprint.start_date <= today,
+            return self.session.query(DBSprint).filter(DBSprint.project_id == project_id,
+                                                       DBSprint.start_date <= today,
                                                        DBSprint.end_date >= today).first()
         except exc.SQLAlchemyError as e:
             logger.error(e)
