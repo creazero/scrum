@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from starlette.status import HTTP_404_NOT_FOUND, HTTP_500_INTERNAL_SERVER_ERROR, HTTP_403_FORBIDDEN
 
 from scrum.api.utils.db import get_db
-from scrum.api.utils.projects import has_access_to_project, is_project_owner
+from scrum.api.utils.projects import has_access_to_project, is_project_owner, project_response
 from scrum.api.utils.security import get_current_user
 from scrum.db_models.user import User
 from scrum.models.project import Project, ProjectCreate
@@ -22,11 +22,12 @@ def get_projects(
 ):
     project_repo = ProjectRepository(session)
     if current_user.is_superuser:
-        return project_repo.fetch_all([], current_user.is_superuser)
+        projects = project_repo.fetch_all([], current_user.is_superuser)
     else:
         accessible_repo = AccessibleProjectRepository(session)
-        return project_repo.fetch_all(accessible_repo.fetch_accessible_for_user(current_user.id),
-                                      current_user.is_superuser)
+        projects = project_repo.fetch_all(accessible_repo.fetch_accessible_for_user(current_user.id),
+                                          current_user.is_superuser)
+    return [project_response(project) for project in projects]
 
 
 @router.get('/projects/{project_id}', response_model=Project)
@@ -47,7 +48,7 @@ def get_project(
             status_code=HTTP_403_FORBIDDEN,
             detail='У текущего пользователя нет доступа к данному проекту'
         )
-    return project
+    return project_response(project)
 
 
 @router.post('/projects', response_model=Project, status_code=201)
