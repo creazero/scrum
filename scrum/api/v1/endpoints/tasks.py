@@ -1,4 +1,5 @@
 import datetime as dt
+import enum
 from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -9,7 +10,7 @@ from scrum.api.utils.db import get_db
 from scrum.api.utils.projects import has_access_to_project, is_project_owner
 from scrum.api.utils.security import get_current_user
 from scrum.api.utils.shared import validate_project
-from scrum.api.utils.tasks import tasks_response
+from scrum.api.utils.tasks import tasks_response, task_response
 from scrum.db_models.task_state import TaskState
 from scrum.db_models.user import User as DBUser
 from scrum.models.task import Task, TaskCreate, TaskBoard, TaskBoardUpdate, TaskAssign
@@ -287,5 +288,4 @@ def get_task(
             status_code=HTTP_404_NOT_FOUND,
             detail='Задачи с таким id не найдено'
         )
-    task.creator = session.query(DBUser).get(task.creator_id)
-    return task
+    return task_response(task)

@@ -4,6 +4,7 @@ from sqlalchemy import Column, String, Integer, ForeignKey, DateTime, Enum
 from sqlalchemy.orm import relationship
 
 from scrum.db.base_class import Base
+from scrum.db_models.tags_association import tags_association
 from scrum.db_models.task_state import TaskState
 from scrum.models.task import TaskCreate
 
@@ -23,6 +24,7 @@ class Task(Base):
     weight = Column(Integer)
     priority = Column(Integer, nullable=False, default=0)
     state = Column(Enum(TaskState))
+    tags = relationship('Tag', secondary=tags_association)
 
     def __init__(self, task_in: TaskCreate, creator_id: int, **kwargs):
         super().__init__(**kwargs)

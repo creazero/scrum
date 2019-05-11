@@ -4,6 +4,7 @@ from typing import Optional, List
 from pydantic import BaseModel
 
 from scrum.db_models.task_state import TaskState
+from scrum.models.tag import Tag
 from scrum.models.users import User
 
 
@@ -36,6 +37,7 @@ class TaskCreate(TaskBase):
 
 class Task(TaskBaseInDb):
     creator: User
+    tags: List[Tag] = []
 
     class Config:
         allow_population_by_alias = True
