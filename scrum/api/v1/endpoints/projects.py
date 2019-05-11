@@ -35,17 +35,17 @@ def get_project(
         session: Session = Depends(get_db),
         current_user: User = Depends(get_current_user)
 ):
-    if not has_access_to_project(session, current_user.id, project_id):
-        raise HTTPException(
-            status_code=HTTP_403_FORBIDDEN,
-            detail='У текущего пользователя нет доступа к данному проекту'
-        )
     repository = ProjectRepository(session)
     project = repository.fetch(project_id)
     if project is None:
         raise HTTPException(
             status_code=HTTP_404_NOT_FOUND,
             detail='Проект с таким id не найден'
+        )
+    if not current_user.is_superuser and not has_access_to_project(session, current_user.id, project_id):
+        raise HTTPException(
+            status_code=HTTP_403_FORBIDDEN,
+            detail='У текущего пользователя нет доступа к данному проекту'
         )
     return project
 
@@ -59,6 +59,30 @@ def create_project(
     repository = ProjectRepository(session)
     new_project = repository.create(data, current_user.id)
     return new_project
+
+
+@router.put('/projects/{project_id}', response_model=Project)
+def update_project(
+        project_id: int,
+        project_in: Project,
+        *,
+        session: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user)
+):
+    project_repo = ProjectRepository(session)
+    project = project_repo.fetch(project_id)
+    if project is None:
+        raise HTTPException(
+            status_code=HTTP_404_NOT_FOUND,
+            detail='Проекта с данным id не существует'
+        )
+    if not current_user.is_superuser and not is_project_owner(session, current_user.id, project_id):
+        raise HTTPException(
+            status_code=HTTP_403_FORBIDDEN,
+            detail='Текущий пользователь не является владельцем проекта'
+        )
+    project = project_repo.update(project, project_in)
+    return project
 
 
 @router.delete('/projects/{project_id}')

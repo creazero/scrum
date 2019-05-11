@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from starlette.status import HTTP_404_NOT_FOUND, HTTP_500_INTERNAL_SERVER_ERROR
 
 from scrum.db_models.project import Project as DBProject
-from scrum.models.project import ProjectCreate
+from scrum.models.project import ProjectCreate, Project
 
 commit_exception = HTTPException(
     status_code=HTTP_500_INTERNAL_SERVER_ERROR,
@@ -58,6 +58,21 @@ class ProjectRepository(object):
         self.session.delete(project)
         try:
             self.session.commit()
+        except exc.SQLAlchemyError as e:
+            logger.error(e)
+            self.session.rollback()
+            raise commit_exception
+
+    def update(self, project: DBProject, project_in: Project) -> DBProject:
+        self.session.begin()
+        project.name = project_in.name
+        project.description = project.description
+        project.sprint_length = project_in.sprint_length
+        project.color = project_in.color
+        try:
+            self.session.commit()
+            self.session.refresh(project)
+            return project
         except exc.SQLAlchemyError as e:
             logger.error(e)
             self.session.rollback()
