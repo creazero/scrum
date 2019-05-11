@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from starlette.status import HTTP_500_INTERNAL_SERVER_ERROR
 
 from scrum.db_models.tag import Tag as DBTag
-from scrum.models.tag import TagCreate
+from scrum.models.tag import TagCreate, Tag
 
 internal_error = HTTPException(
     status_code=HTTP_500_INTERNAL_SERVER_ERROR,
@@ -63,5 +63,18 @@ class TagRepository(object):
         try:
             return self.session.query(DBTag).filter_by(project_id=project_id).all()
         except exc.SQLAlchemyError as e:
+            logger.error(e)
+            raise internal_error
+
+    def update(self, tag: DBTag, tag_in: Tag) -> DBTag:
+        self.session.begin()
+        tag.name = tag_in.name
+        tag.color = tag_in.color
+        try:
+            self.session.commit()
+            self.session.refresh(tag)
+            return tag
+        except exc.SQLAlchemyError as e:
+            self.session.rollback()
             logger.error(e)
             raise internal_error
