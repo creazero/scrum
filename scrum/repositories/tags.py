@@ -1,4 +1,5 @@
 import logging
+from typing import Optional
 
 from fastapi import HTTPException
 from sqlalchemy import exc
@@ -31,4 +32,11 @@ class TagRepository(object):
         except exc.SQLAlchemyError as e:
             logger.error(e)
             self.session.rollback()
+            raise internal_error
+
+    def fetch(self, tag_id: int) -> Optional[DBTag]:
+        try:
+            return self.session.query(DBTag).get(tag_id)
+        except exc.SQLAlchemyError as e:
+            logger.error(e)
             raise internal_error
