@@ -78,6 +78,7 @@ class TaskRepository(object):
                 setattr(task, attr, value)
         try:
             self.session.commit()
+            self.session.refresh(task)
             return task
         except exc.SQLAlchemyError as e:
             logger.error(e)

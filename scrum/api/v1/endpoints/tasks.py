@@ -85,38 +85,6 @@ def delete_task(
     return {'status': 'ok'}
 
 
-@router.put('/tasks/{task_id}', response_model=Task)
-def update_task(
-        task_id: int,
-        task_in: TaskCreate,
-        *,
-        session: Session = Depends(get_db),
-        current_user: DBUser = Depends(get_current_user)
-):
-    task_repo = TaskRepository(session)
-    task = task_repo.fetch(task_id)
-    if task is None:
-        raise HTTPException(
-            status_code=HTTP_404_NOT_FOUND,
-            detail='Задачи с данным id не существует'
-        )
-    if not current_user.is_superuser:
-        if not has_access_to_project(session, current_user.id, task.project_id):
-            raise HTTPException(
-                status_code=HTTP_403_FORBIDDEN,
-                detail=f'Текущий пользователь не имеет доступа к проекту {task.project_id}'
-            )
-        if not is_project_owner(session, current_user.id, task.project_id):
-            raise HTTPException(
-                status_code=HTTP_403_FORBIDDEN,
-                detail='Текущий пользователь не имеет права на изменение задач в данном проекте'
-            )
-    task = task_repo.update(task, description=task_in.description,
-                            name=task_in.name, weight=task_in.weight,
-                            priority=task_in.priority)
-    return task
-
-
 @router.post('/tasks/assign', response_model=User)
 def assign_user(
         data: TaskAssign,
@@ -287,4 +255,36 @@ def get_task(
             status_code=HTTP_404_NOT_FOUND,
             detail='Задачи с таким id не найдено'
         )
+    return task_response(task)
+
+
+@router.put('/tasks/{task_id}', response_model=Task)
+def update_task(
+        task_id: int,
+        task_in: TaskCreate,
+        *,
+        session: Session = Depends(get_db),
+        current_user: DBUser = Depends(get_current_user)
+):
+    task_repo = TaskRepository(session)
+    task = task_repo.fetch(task_id)
+    if task is None:
+        raise HTTPException(
+            status_code=HTTP_404_NOT_FOUND,
+            detail='Задачи с данным id не существует'
+        )
+    if not current_user.is_superuser:
+        if not has_access_to_project(session, current_user.id, task.project_id):
+            raise HTTPException(
+                status_code=HTTP_403_FORBIDDEN,
+                detail=f'Текущий пользователь не имеет доступа к проекту {task.project_id}'
+            )
+        if not is_project_owner(session, current_user.id, task.project_id):
+            raise HTTPException(
+                status_code=HTTP_403_FORBIDDEN,
+                detail='Текущий пользователь не имеет права на изменение задач в данном проекте'
+            )
+    task = task_repo.update(task, description=task_in.description,
+                            name=task_in.name, weight=task_in.weight,
+                            priority=task_in.priority)
     return task_response(task)
