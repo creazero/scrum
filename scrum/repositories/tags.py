@@ -26,6 +26,7 @@ class TagRepository(object):
         self.session.add(tag)
         try:
             self.session.commit()
+            self.session.refresh(tag)
             return tag
         except exc.SQLAlchemyError as e:
             logger.error(e)
