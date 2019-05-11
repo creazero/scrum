@@ -12,3 +12,13 @@ def has_intersecting_sprint(start_date: dt.date, all_sprints: List[Sprint], leng
         if has_any:
             return True
     return False
+
+
+def date_range(start_date: dt.date, end_date: dt.date) -> List[str]:
+    step = dt.timedelta(days=1)
+    current = dt.date(start_date.year, start_date.month, start_date.day)
+    dates: List[str] = [str(current)]
+    while current < end_date:
+        dates.append(str(current + step))
+        current += step
+    return dates

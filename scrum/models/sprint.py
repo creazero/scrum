@@ -1,5 +1,5 @@
 import datetime as dt
-from typing import Optional, List
+from typing import Optional, List, Union
 
 from pydantic import BaseModel
 
@@ -51,3 +51,12 @@ class IntersectionCheck(BaseModel):
             'project_id': 'projectId',
         }
 
+
+class DataSet(BaseModel):
+    data: List[Optional[Union[float, int]]]
+    label: str
+
+
+class ChartData(BaseModel):
+    data: List[DataSet]
+    labels: List[str]
