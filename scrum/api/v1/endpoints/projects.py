@@ -99,12 +99,12 @@ def delete_project(
             status_code=HTTP_404_NOT_FOUND,
             detail='Проект с данным id не найден'
         )
-    if not has_access_to_project(session, current_user.id, project_id):
+    if not current_user.is_superuser and not has_access_to_project(session, current_user.id, project_id):
         raise HTTPException(
             status_code=HTTP_403_FORBIDDEN,
             detail='У текущего пользователя нет доступа к данному проекту'
         )
-    if not is_project_owner(session, current_user.id, project_id):
+    if not current_user.is_superuser and not is_project_owner(session, current_user.id, project_id):
         raise HTTPException(
             status_code=HTTP_403_FORBIDDEN,
             detail='Текущий пользователь не является владельцем проекта'

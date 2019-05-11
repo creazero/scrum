@@ -14,9 +14,9 @@ class Project(Base):
     id = Column(Integer, primary_key=True)
     name = Column(String(50), unique=True, index=True)
     description = Column(String(2000))
-    color = Column(String)
+    color = Column(String, default='#3F51B5')
     created_at = Column(DateTime, default=dt.datetime.utcnow())
-    users: List[AccessibleProject] = relationship('AccessibleProject')
+    users: List[AccessibleProject] = relationship('AccessibleProject', cascade='save-update, delete')
     sprint_length = Column(Integer, nullable=False, default=2)
     tags = relationship('Tag')
 
