@@ -1,5 +1,5 @@
 import logging
-from typing import Optional
+from typing import Optional, List
 
 from fastapi import HTTPException
 from sqlalchemy import exc
@@ -37,6 +37,21 @@ class TagRepository(object):
     def fetch(self, tag_id: int) -> Optional[DBTag]:
         try:
             return self.session.query(DBTag).get(tag_id)
+        except exc.SQLAlchemyError as e:
+            logger.error(e)
+            raise internal_error
+
+    def fetch_accessible(self, accessible_projects: List[int]) -> List[DBTag]:
+        try:
+            return self.session.query(DBTag)\
+                .filter(DBTag.project_id.in_(accessible_projects)).all()
+        except exc.SQLAlchemyError as e:
+            logger.error(e)
+            raise internal_error
+
+    def fetch_by_project(self, project_id: int) -> List[DBTag]:
+        try:
+            return self.session.query(DBTag).filter_by(project_id=project_id).all()
         except exc.SQLAlchemyError as e:
             logger.error(e)
             raise internal_error
