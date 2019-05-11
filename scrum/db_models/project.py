@@ -17,6 +17,8 @@ class Project(Base):
     color = Column(String)
     created_at = Column(DateTime, default=dt.datetime.utcnow())
     users: List[AccessibleProject] = relationship('AccessibleProject')
+    sprint_length = Column(Integer, nullable=False, default=2)
+    tags = relationship('Tag')
 
     def __init__(self, creator_id: int, **kwargs):
         super().__init__(**kwargs)
