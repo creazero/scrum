@@ -30,6 +30,25 @@ def get_sprints(
     return sprint_repo.fetch_all(accessible_projects, project_id)
 
 
+@router.get('/sprints/{sprint_id}', response_model=Sprint)
+def get_sprint(
+        sprint_id: int,
+        *,
+        session: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user)
+):
+    sprint_repo = SprintRepository(session)
+    sprint = sprint_repo.fetch(sprint_id)
+    if sprint is None:
+        raise HTTPException(
+            status_code=HTTP_404_NOT_FOUND,
+            detail='Спринта с таким id не существует'
+        )
+    validate_project(current_user.id, sprint.project_id,
+                     current_user.is_superuser, session=session)
+    return sprint
+
+
 @router.get('/sprints/chart_data', response_model=ChartData)
 def get_chart_data(
         sprint_id: int,
