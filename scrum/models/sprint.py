@@ -3,6 +3,8 @@ from typing import Optional, List, Union
 
 from pydantic import BaseModel
 
+from scrum.models.task import Task
+
 
 class SprintBase(BaseModel):
     start_date: dt.date
@@ -26,6 +28,7 @@ class SprintCreate(SprintBase):
 
 
 class Sprint(SprintBaseInDb):
+    tasks: List[Task] = []
 
     class Config:
         allow_population_by_alias = True

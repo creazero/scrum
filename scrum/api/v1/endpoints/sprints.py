@@ -8,13 +8,27 @@ from starlette.status import HTTP_400_BAD_REQUEST, HTTP_404_NOT_FOUND
 from scrum.api.utils.db import get_db
 from scrum.api.utils.security import get_current_user
 from scrum.api.utils.shared import validate_project
-from scrum.api.utils.sprints import has_intersecting_sprint, date_range
+from scrum.api.utils.sprints import has_intersecting_sprint, date_range, sprint_response
 from scrum.db_models.user import User
 from scrum.models.sprint import SprintCreate, Sprint, OngoingSprint, IntersectionCheck, ChartData
 from scrum.repositories.accessible_project import AccessibleProjectRepository
 from scrum.repositories.sprints import SprintRepository
 
 router = APIRouter()
+
+
+@router.get('/sprints/ongoing', response_model=OngoingSprint)
+def ongoing_sprint(
+        project_id: int,
+        session: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user)
+):
+    validate_project(current_user.id, project_id,
+                     current_user.is_superuser, session=session)
+    sprint_repo = SprintRepository(session)
+    return {
+        'sprint': sprint_repo.fetch_ongoing(project_id)
+    }
 
 
 @router.get('/sprints', response_model=List[Sprint])
@@ -46,7 +60,7 @@ def get_sprint(
         )
     validate_project(current_user.id, sprint.project_id,
                      current_user.is_superuser, session=session)
-    return sprint
+    return sprint_response(sprint)
 
 
 @router.get('/sprints/chart_data', response_model=ChartData)
@@ -139,20 +153,6 @@ def delete_sprint(
     return {'status': 'ok'}
 
 
-@router.get('/sprints/ongoing', response_model=OngoingSprint)
-def ongoing_sprint(
-        project_id: int,
-        session: Session = Depends(get_db),
-        current_user: User = Depends(get_current_user)
-):
-    validate_project(current_user.id, project_id,
-                     current_user.is_superuser, session=session)
-    sprint_repo = SprintRepository(session)
-    return {
-        'sprint': sprint_repo.fetch_ongoing(project_id)
-    }
-
-
 @router.post('/sprints/intersection')
 def check_intersection(
         data: IntersectionCheck,
@@ -167,3 +167,25 @@ def check_intersection(
     return {
         'has_intersection': has_intersecting_sprint(data.start_date, all_sprints)
     }
+
+
+@router.put('/sprints/{sprint_id}', response_model=Sprint)
+def update_sprint(
+        sprint_id: int,
+        sprint_in: SprintCreate,
+        *,
+        session: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user)
+):
+    sprint_repo = SprintRepository(session)
+    sprint = sprint_repo.fetch(sprint_id)
+    if sprint is None:
+        raise HTTPException(
+            status_code=HTTP_404_NOT_FOUND,
+            detail='Спринта с таким id не существует'
+        )
+    validate_project(current_user.id, sprint.project_id,
+                     session=session, check_owner=True,
+                     is_superuser=current_user.is_superuser)
+    sprint = sprint_repo.update(sprint, sprint_in)
+    return sprint

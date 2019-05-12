@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from starlette.status import HTTP_500_INTERNAL_SERVER_ERROR
 
 from scrum.db_models.sprint import Sprint as DBSprint
-from scrum.db_models.task import Task
+from scrum.db_models.task import Task as DBTask
 from scrum.db_models.task_state import TaskState
 from scrum.models.sprint import SprintCreate
 
@@ -69,7 +69,7 @@ class SprintRepository(object):
         self.session.add(sprint)
         self.session.flush()
         for task_id in sprint_in.tasks:
-            task_db: Task = self.session.query(Task).get(task_id)
+            task_db: DBTask = self.session.query(DBTask).get(task_id)
             task_db.sprint_id = sprint.id
             task_db.state = TaskState.todo
         try:
@@ -88,6 +88,29 @@ class SprintRepository(object):
         try:
             self.session.delete(sprint)
             self.session.commit()
+        except exc.SQLAlchemyError as e:
+            logger.error(e)
+            self.session.rollback()
+            raise internal_error
+
+    def update(self, sprint: DBSprint, sprint_in: SprintCreate) -> DBSprint:
+        self.session.begin()
+        sprint.start_date = sprint_in.start_date
+        for task in sprint.tasks:
+            if task.id not in sprint_in.tasks:
+                task.sprint_id = None
+                task.state = None
+            else:
+                sprint_in.tasks.remove(task.id)
+        for task_id in sprint_in.tasks:
+            task_db: DBTask = self.session.query(DBTask).get(task_id)
+            if task_db is not None and task_db.sprint_id is None:
+                task_db.state = TaskState.todo
+                task_db.sprint_id = sprint.id
+        try:
+            self.session.commit()
+            self.session.refresh(sprint)
+            return sprint
         except exc.SQLAlchemyError as e:
             logger.error(e)
             self.session.rollback()
