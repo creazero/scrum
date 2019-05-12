@@ -30,6 +30,20 @@ def get_projects(
     return [project_response(project) for project in projects]
 
 
+@router.get('/projects/unique')
+def is_unique_name(
+        name: str,
+        *,
+        session: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user)
+):
+    project_repo = ProjectRepository(session)
+    project = project_repo.check_name(name)
+    return {
+        'unique': project is None
+    }
+
+
 @router.get('/projects/{project_id}', response_model=Project)
 def get_project(
         project_id: int,
@@ -89,6 +103,7 @@ def update_project(
 @router.delete('/projects/{project_id}')
 def delete_project(
         project_id: int,
+        *,
         session: Session = Depends(get_db),
         current_user: User = Depends(get_current_user)
 ):

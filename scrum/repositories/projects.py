@@ -38,6 +38,13 @@ class ProjectRepository(object):
             logger.error(e)
             raise commit_exception
 
+    def check_name(self, project_name: str) -> Optional[DBProject]:
+        try:
+            return self.session.query(DBProject).filter_by(name=project_name).first()
+        except exc.SQLAlchemyError as e:
+            logger.error(e)
+            raise commit_exception
+
     def create(self, user_data: ProjectCreate, creator_id: int) -> DBProject:
         new_project = DBProject(creator_id, name=user_data.name,
                                 description=user_data.description,
