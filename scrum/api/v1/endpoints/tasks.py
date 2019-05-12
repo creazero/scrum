@@ -176,15 +176,15 @@ def get_task_board(
         )
     task_board = TaskBoard()
     for task in sprint.tasks:
-        task.creator = session.query(DBUser).get(task.creator_id)
+        new_task = task_response(task)
         if task.state == TaskState.todo:
-            task_board.todo.append(task)
+            task_board.todo.append(new_task)
         elif task.state == TaskState.in_process:
-            task_board.inProcess.append(task)
+            task_board.inProcess.append(new_task)
         elif task.state == TaskState.testing:
-            task_board.testing.append(task)
+            task_board.testing.append(new_task)
         elif task.state == TaskState.done:
-            task_board.done.append(task)
+            task_board.done.append(new_task)
     return task_board
 
 

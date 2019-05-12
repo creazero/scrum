@@ -74,20 +74,21 @@ class TaskRepository(object):
             self.session.rollback()
             raise internal_error
 
-    def update(self, task: DBTask, tags: List[int], **kwargs) -> DBTask:
+    def update(self, task: DBTask, tags: List[int] = None, **kwargs) -> DBTask:
         self.session.begin()
         for attr, value in kwargs.items():
             if attr != 'id':
                 setattr(task, attr, value)
-        for tag in task.tags:
-            if tag.id not in tags:
-                task.tags.remove(tag)
-            else:
-                tags.remove(tag.id)
-        for tag_id in tags:
-            tag: DBTag = self.session.query(DBTag).get(tag_id)
-            if tag is not None:
-                task.tags.append(tag)
+        if tags is not None:
+            for tag in task.tags:
+                if tag.id not in tags:
+                    task.tags.remove(tag)
+                else:
+                    tags.remove(tag.id)
+            for tag_id in tags:
+                tag: DBTag = self.session.query(DBTag).get(tag_id)
+                if tag is not None:
+                    task.tags.append(tag)
         try:
             self.session.commit()
             self.session.refresh(task)
