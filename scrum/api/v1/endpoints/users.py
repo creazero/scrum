@@ -4,8 +4,9 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from scrum.api.utils.db import get_db
-from scrum.api.utils.security import get_oauth_schema, get_current_user
+from scrum.api.utils.security import get_current_user
 from scrum.api.utils.shared import validate_project
+from scrum.api.utils.users import user_response
 from scrum.db_models.user import User as DBUser
 from scrum.models.users import User, UserAuth
 from scrum.repositories.users import UserRepository
@@ -29,7 +30,8 @@ def get_users(
     if project_id is not None:
         validate_project(current_user.id, project_id, current_user.is_superuser,
                          session=session)
-        return repository.fetch_by_project(project_id)
+        users = repository.fetch_by_project(project_id)
+        return [user_response(user) for user in users]
     elif current_user.is_superuser:
         return repository.fetch_all()
     else:

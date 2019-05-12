@@ -25,6 +25,7 @@ class UserUpdate(UserBaseInDb):
 
 # retrieve
 class User(UserBaseInDb):
+    role: Optional[str] = None
 
     class Config:
         allow_population_by_alias = True
