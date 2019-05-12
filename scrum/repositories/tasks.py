@@ -8,6 +8,8 @@ from sqlalchemy.orm import Session
 from starlette.status import HTTP_500_INTERNAL_SERVER_ERROR
 
 from scrum.db_models.task import Task as DBTask, TaskState
+from scrum.db_models.tag import Tag as DBTag
+from scrum.models.tag import Tag
 from scrum.models.task import TaskCreate, TaskBoard, Task
 
 internal_error = HTTPException(
@@ -72,11 +74,20 @@ class TaskRepository(object):
             self.session.rollback()
             raise internal_error
 
-    def update(self, task: DBTask, **kwargs) -> DBTask:
+    def update(self, task: DBTask, tags: List[int], **kwargs) -> DBTask:
         self.session.begin()
         for attr, value in kwargs.items():
             if attr != 'id':
                 setattr(task, attr, value)
+        for tag in task.tags:
+            if tag.id not in tags:
+                task.tags.remove(tag)
+            else:
+                tags.remove(tag.id)
+        for tag_id in tags:
+            tag: DBTag = self.session.query(DBTag).get(tag_id)
+            if tag is not None:
+                task.tags.append(tag)
         try:
             self.session.commit()
             self.session.refresh(task)

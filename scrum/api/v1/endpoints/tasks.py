@@ -284,7 +284,7 @@ def update_task(
                 status_code=HTTP_403_FORBIDDEN,
                 detail='Текущий пользователь не имеет права на изменение задач в данном проекте'
             )
-    task = task_repo.update(task, description=task_in.description,
+    task = task_repo.update(task, task_in.tags, description=task_in.description,
                             name=task_in.name, weight=task_in.weight,
                             priority=task_in.priority)
     return task_response(task)

@@ -32,7 +32,7 @@ class TaskBaseInDb(TaskBase):
 
 
 class TaskCreate(TaskBase):
-    pass
+    tags: List[int] = []
 
 
 class Task(TaskBaseInDb):
