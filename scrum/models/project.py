@@ -1,9 +1,15 @@
 import datetime as dt
+import enum
 from typing import Optional, List
 
 from pydantic import BaseModel
 
 from scrum.models.tag import Tag
+
+
+class AccessOp(enum.Enum):
+    give = 'give'
+    revoke = 'revoke'
 
 
 class ProjectBase(BaseModel):
@@ -37,3 +43,16 @@ class ProjectCreate(ProjectBase):
 
 class Project(ProjectBaseInDb):
     pass
+
+
+class ProjectAccess(BaseModel):
+    project_id: int
+    user_id: int
+    op: AccessOp
+
+    class Config:
+        allow_population_by_alias = True
+        fields = {
+            'project_id': 'projectId',
+            'user_id': 'userId'
+        }

@@ -27,3 +27,19 @@ class AccessibleProjectRepository(object):
         if only_owner:
             accessible = accessible.filter_by(role='owner')
         return [row.project_id for row in accessible.all()]
+
+    def delete(self, project_id: int, user_id: int) -> None:
+        self.session.begin()
+        try:
+            ap = self.session.query(AccessibleProject)\
+                .filter_by(project_id=project_id, user_id=user_id).first()
+            if ap is not None:
+                self.session.delete(ap)
+                self.session.commit()
+        except exc.SQLAlchemyError as e:
+            logger.error(e)
+            self.session.rollback()
+            raise HTTPException(
+                status_code=HTTP_500_INTERNAL_SERVER_ERROR,
+                detail='Внутренняя ошибка сервера'
+            )

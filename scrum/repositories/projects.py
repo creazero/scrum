@@ -4,9 +4,11 @@ from typing import List, Optional
 from fastapi import HTTPException
 from sqlalchemy import or_, exc
 from sqlalchemy.orm import Session
-from starlette.status import HTTP_404_NOT_FOUND, HTTP_500_INTERNAL_SERVER_ERROR
+from starlette.status import HTTP_500_INTERNAL_SERVER_ERROR
 
+from scrum.db_models.accessible_project import AccessibleProject
 from scrum.db_models.project import Project as DBProject
+from scrum.db_models.user import User as DBUser
 from scrum.models.project import ProjectCreate, Project
 
 commit_exception = HTTPException(
@@ -63,6 +65,17 @@ class ProjectRepository(object):
     def delete(self, project: DBProject) -> None:
         self.session.begin()
         self.session.delete(project)
+        try:
+            self.session.commit()
+        except exc.SQLAlchemyError as e:
+            logger.error(e)
+            self.session.rollback()
+            raise commit_exception
+
+    def give_access(self, project: DBProject, user: DBUser) -> None:
+        self.session.begin()
+        ap = AccessibleProject(project_id=project.id, user_id=user.id, role='dev')
+        project.users.append(ap)
         try:
             self.session.commit()
         except exc.SQLAlchemyError as e:
