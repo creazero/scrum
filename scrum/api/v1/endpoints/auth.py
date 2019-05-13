@@ -18,9 +18,9 @@ def login(session: Session = Depends(get_db), user_auth: UserAuth = None):
     repository = UserRepository(session)
     user = repository.fetch_by_username(user_auth.username)
     if user is None or not verify_password(user_auth.password, user.hashed_password):
-        raise HTTPException(400, detail='Неверное имя пользователя или пароль')
+        raise HTTPException(401, detail='Неверное имя пользователя или пароль')
     if not user.is_active:
-        raise HTTPException(400, detail='Аккаунт данного пользователя не активен')
+        raise HTTPException(403, detail='Аккаунт данного пользователя не активен')
     token_expires = timedelta(minutes=config.ACCESS_TOKEN_EXPIRE_MINUTES)
     return {
         'token': create_access_token(data={'user_id': user.id}, expires_delta=token_expires)

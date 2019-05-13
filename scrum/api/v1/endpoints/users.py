@@ -32,10 +32,7 @@ def get_users(
                          session=session)
         users = repository.fetch_by_project(project_id)
         return [user_response(user) for user in users]
-    elif current_user.is_superuser:
-        return repository.fetch_all()
-    else:
-        return repository.fetch_from_accessible(current_user.id)
+    return repository.fetch_all()
 
 
 @router.post('/users', response_model=User)
