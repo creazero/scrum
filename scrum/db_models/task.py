@@ -21,6 +21,7 @@ class Task(Base):
     creator_id = Column(Integer, ForeignKey('users.id'), nullable=False)
     creator = relationship('User', foreign_keys=[creator_id])
     assignee_id = Column(Integer, ForeignKey('users.id'), nullable=True)
+    assignee = relationship('User', foreign_keys=[assignee_id])
     weight = Column(Integer)
     priority = Column(Integer, nullable=False, default=0)
     state = Column(Enum(TaskState))

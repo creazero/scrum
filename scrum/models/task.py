@@ -36,6 +36,7 @@ class TaskCreate(TaskBase):
 
 
 class Task(TaskBaseInDb):
+    assignee: Optional[User] = None
     creator: User
     tags: List[Tag] = []
 
