@@ -17,52 +17,6 @@ from scrum.repositories.sprints import SprintRepository
 router = APIRouter()
 
 
-@router.get('/sprints/ongoing', response_model=OngoingSprint)
-def ongoing_sprint(
-        project_id: int,
-        session: Session = Depends(get_db),
-        current_user: User = Depends(get_current_user)
-):
-    validate_project(current_user.id, project_id,
-                     current_user.is_superuser, session=session)
-    sprint_repo = SprintRepository(session)
-    return {
-        'sprint': sprint_repo.fetch_ongoing(project_id)
-    }
-
-
-@router.get('/sprints', response_model=List[Sprint])
-def get_sprints(
-        project_id: int = None,
-        *,
-        session: Session = Depends(get_db),
-        current_user: User = Depends(get_current_user)
-):
-    accessible_repo = AccessibleProjectRepository(session)
-    accessible_projects = accessible_repo.fetch_accessible_for_user(current_user.id)
-    sprint_repo = SprintRepository(session)
-    return sprint_repo.fetch_all(accessible_projects, project_id)
-
-
-@router.get('/sprints/{sprint_id}', response_model=Sprint)
-def get_sprint(
-        sprint_id: int,
-        *,
-        session: Session = Depends(get_db),
-        current_user: User = Depends(get_current_user)
-):
-    sprint_repo = SprintRepository(session)
-    sprint = sprint_repo.fetch(sprint_id)
-    if sprint is None:
-        raise HTTPException(
-            status_code=HTTP_404_NOT_FOUND,
-            detail='Спринта с таким id не существует'
-        )
-    validate_project(current_user.id, sprint.project_id,
-                     current_user.is_superuser, session=session)
-    return sprint_response(sprint)
-
-
 @router.get('/sprints/chart_data', response_model=ChartData)
 def get_chart_data(
         sprint_id: int,
@@ -109,6 +63,52 @@ def get_chart_data(
         ],
         'labels': labels
     }
+
+
+@router.get('/sprints/ongoing', response_model=OngoingSprint)
+def ongoing_sprint(
+        project_id: int,
+        session: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user)
+):
+    validate_project(current_user.id, project_id,
+                     current_user.is_superuser, session=session)
+    sprint_repo = SprintRepository(session)
+    return {
+        'sprint': sprint_repo.fetch_ongoing(project_id)
+    }
+
+
+@router.get('/sprints', response_model=List[Sprint])
+def get_sprints(
+        project_id: int = None,
+        *,
+        session: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user)
+):
+    accessible_repo = AccessibleProjectRepository(session)
+    accessible_projects = accessible_repo.fetch_accessible_for_user(current_user.id)
+    sprint_repo = SprintRepository(session)
+    return sprint_repo.fetch_all(accessible_projects, project_id)
+
+
+@router.get('/sprints/{sprint_id}', response_model=Sprint)
+def get_sprint(
+        sprint_id: int,
+        *,
+        session: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user)
+):
+    sprint_repo = SprintRepository(session)
+    sprint = sprint_repo.fetch(sprint_id)
+    if sprint is None:
+        raise HTTPException(
+            status_code=HTTP_404_NOT_FOUND,
+            detail='Спринта с таким id не существует'
+        )
+    validate_project(current_user.id, sprint.project_id,
+                     current_user.is_superuser, session=session)
+    return sprint_response(sprint)
 
 
 @router.post('/sprints', status_code=201, response_model=Sprint)
