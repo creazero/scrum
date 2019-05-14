@@ -1,5 +1,5 @@
 import logging
-from typing import List
+from typing import List, Optional
 
 from fastapi import HTTPException
 from sqlalchemy import exc
@@ -27,6 +27,20 @@ class AccessibleProjectRepository(object):
         if only_owner:
             accessible = accessible.filter_by(role='owner')
         return [row.project_id for row in accessible.all()]
+
+    def fetch_user_role(self, user_id: int, project_id: int) -> Optional[str]:
+        try:
+            ap: AccessibleProject = self.session.query(AccessibleProject)\
+                .filter_by(user_id=user_id, project_id=project_id).first()
+            if ap is None:
+                return None
+            return ap.role
+        except exc.SQLAlchemyError as e:
+            logger.error(e)
+            raise HTTPException(
+                status_code=HTTP_500_INTERNAL_SERVER_ERROR,
+                detail='Внутренняя ошибка сервера'
+            )
 
     def delete(self, project_id: int, user_id: int) -> None:
         self.session.begin()

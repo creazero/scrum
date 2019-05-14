@@ -9,6 +9,7 @@ from scrum.api.utils.shared import validate_project
 from scrum.api.utils.users import user_response
 from scrum.db_models.user import User as DBUser
 from scrum.models.users import User, UserAuth
+from scrum.repositories.accessible_project import AccessibleProjectRepository
 from scrum.repositories.users import UserRepository
 
 router = APIRouter()
@@ -49,7 +50,12 @@ def create_user(user_in: UserAuth, session: Session = Depends(get_db)):
 
 @router.get('/current_user', response_model=User)
 def current_user(
+        project_id: int = None,
         session: Session = Depends(get_db),
         user: DBUser = Depends(get_current_user)
 ):
-    return user
+    if project_id is None:
+        return user
+    ap_repo = AccessibleProjectRepository(session)
+    role = ap_repo.fetch_user_role(user.id, project_id)
+    return User(role=role, **ap_repo.__dict__)
