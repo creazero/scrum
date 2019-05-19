@@ -18,7 +18,9 @@ class Project(Base):
     created_at = Column(DateTime, default=dt.datetime.utcnow())
     users: List[AccessibleProject] = relationship('AccessibleProject', cascade='save-update, delete')
     sprint_length = Column(Integer, nullable=False, default=2)
-    tags = relationship('Tag')
+    tags = relationship('Tag', cascade='save-update, delete')
+    tasks = relationship('Task', cascade='save-update, delete')
+    sprints = relationship('Sprint', cascade='save-update, delete')
 
     def __init__(self, creator_id: int, **kwargs):
         super().__init__(**kwargs)
